@@ -6,7 +6,13 @@
 --   * Credits are an APPEND-ONLY ledger, never a mutable balance, because you
 --     will need to claw back fraud and you cannot audit a number.
 
-create extension if not exists postgis;
+-- Supabase keeps extensions out of `public`. PostGIS must therefore be on the
+-- search_path of anything that touches a geography column — including the
+-- security-definer functions below, which pin their own path.
+create schema if not exists extensions;
+create extension if not exists postgis with schema extensions;
+
+set search_path = public, extensions;
 
 create type venue_type as enum (
   'store','restaurant','cafe','gas_station','park',
@@ -123,6 +129,6 @@ create table credit_ledger (
 create unique index ledger_dedupe on credit_ledger (user_id, reason, ref_id)
   where ref_id is not null;
 
-create view user_credits as
+create view user_credits with (security_invoker = true) as
   select user_id, sum(delta)::int as balance
   from credit_ledger group by user_id;

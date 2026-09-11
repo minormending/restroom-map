@@ -2,7 +2,9 @@
 
 -- A raw count is the wrong signal: twelve confirmations from eighteen months
 -- ago mean less than two from Tuesday, because codes rotate. Weight by age.
-create view bathroom_confidence as
+set search_path = public, extensions;
+
+create view bathroom_confidence with (security_invoker = true) as
 select
   b.id as bathroom_id,
   count(*) filter (where r.kind = 'works'
@@ -32,7 +34,7 @@ returns table (
   id uuid, lat float8, lng float8, name text,
   venue_type venue_type, access_kind access_kind,
   has_code boolean, confirms int, troubles int, last_confirmed timestamptz)
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, extensions as $$
   select
     b.id,
     st_y(b.geog::geometry), st_x(b.geog::geometry),
@@ -60,7 +62,7 @@ returns boolean language sql stable as $$ select true; $$;
 
 create or replace function get_code(p_bathroom_id uuid)
 returns table (code text, submitted_at timestamptz, confirms int)
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql stable security definer set search_path = public, extensions as $$
 begin
   if not can_view_code(auth.uid(), p_bathroom_id) then
     raise exception 'code_locked' using errcode = '42501';

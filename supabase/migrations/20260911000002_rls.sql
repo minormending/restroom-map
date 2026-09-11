@@ -10,9 +10,11 @@
 -- the CALLER's RLS: a hidden bathroom would return no rows, the guard would
 -- silently pass, and a user could farm reports against their own submissions.
 
+set search_path = public, extensions;
+
 create or replace function owns_bathroom(p_user uuid, p_bathroom uuid)
 returns boolean
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, extensions as $$
   select exists (
     select 1 from bathrooms
     where id = p_bathroom and created_by = p_user);   -- sees all rows
@@ -20,14 +22,14 @@ $$;
 
 create or replace function is_banned(p_user uuid)
 returns boolean
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, extensions as $$
   select coalesce(
     (select banned_at is not null from profiles where id = p_user), false);
 $$;
 
 create or replace function daily_submissions(p_user uuid)
 returns int
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, extensions as $$
   select count(*)::int from bathrooms
   where created_by = p_user and created_at > now() - interval '24 hours';
 $$;
