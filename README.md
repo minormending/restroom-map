@@ -35,6 +35,7 @@ or `supabase db push` if you have the CLI.
 | `20260911000001_init.sql` | Tables, enums, indexes |
 | `20260911000002_rls.sql` | Row-level security and its guard helpers |
 | `20260911000003_rpc.sql` | Confidence view, viewport query, code gate |
+| `20260911000004_grants.sql` | Data API grants (create the project with auto-expose OFF) |
 | `seed.sql` | 30 Lower Manhattan starter rows (generated) |
 
 Regenerate the seed after editing `src/data/seed.json`:
