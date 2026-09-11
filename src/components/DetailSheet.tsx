@@ -1,3 +1,5 @@
+import FlagLink from './FlagLink'
+import ReportBox from './ReportBox'
 import { confidenceLine } from '../lib/format'
 import { ACCESS_LABELS, VENUE_LABELS, fillFor, type Bathroom } from '../lib/types'
 import { fillColor } from '../map/icons'
@@ -6,7 +8,9 @@ interface Props {
   bathroom: Bathroom
   detail: Partial<Bathroom> | null
   loading: boolean
+  near: [number, number] | null
   onClose: () => void
+  onReported: (id: string, patch: Partial<Bathroom>) => void
 }
 
 const AMENITIES = [
@@ -15,7 +19,9 @@ const AMENITIES = [
   ['gender_neutral', 'Gender neutral'],
 ] as const
 
-export default function DetailSheet({ bathroom, detail, loading, onClose }: Props) {
+export default function DetailSheet({
+  bathroom, detail, loading, near, onClose, onReported,
+}: Props) {
   const merged = { ...bathroom, ...detail }
   const confidence = confidenceLine(merged.confirms, merged.troubles, merged.last_confirmed)
   const accent = fillColor(fillFor(merged))
@@ -73,9 +79,11 @@ export default function DetailSheet({ bathroom, detail, loading, onClose }: Prop
         })}
       </ul>
 
-      <p className="sheet-foot">
-        Reporting whether this works arrives in the next milestone.
-      </p>
+      <ReportBox bathroom={merged} near={near} onReported={onReported} />
+
+      <div className="sheet-foot">
+        <FlagLink bathroomId={merged.id} />
+      </div>
     </aside>
   )
 }

@@ -53,6 +53,9 @@ export interface Bathroom {
   code?: string | null
 }
 
+export const REPORT_KINDS = ['works', 'code_bad', 'gone', 'inaccessible', 'dirty'] as const
+export type ReportKind = (typeof REPORT_KINDS)[number]
+
 export interface Filters {
   venues: Set<VenueType>
   access: Set<AccessKind>

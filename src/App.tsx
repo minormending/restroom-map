@@ -103,6 +103,12 @@ export default function App() {
     return () => { live = false }
   }, [selectedId])
 
+  // Patch the row in place so the pin re-colours the moment you report,
+  // rather than waiting for the next viewport query.
+  const onReported = useCallback((id: string, patch: Partial<Bathroom>) => {
+    setBathrooms((rows) => rows.map((b) => (b.id === id ? { ...b, ...patch } : b)))
+  }, [])
+
   const selected = bathrooms.find((b) => b.id === selectedId) ?? null
   const hint = LOCATION_HINT[locStatus]
 
@@ -156,7 +162,9 @@ export default function App() {
           bathroom={selected}
           detail={detail}
           loading={detailLoading}
+          near={userLocation}
           onClose={() => setSelectedId(null)}
+          onReported={onReported}
         />
       )}
     </div>

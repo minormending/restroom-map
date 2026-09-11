@@ -460,3 +460,101 @@ button { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ---------- reporting ---------- */
+
+.report {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.8rem 0.85rem;
+  background: var(--surface-alt);
+  border: 1px solid var(--rule-soft);
+  border-radius: 7px;
+}
+.report.is-done { border-style: dashed; }
+
+.report-q { font-size: 0.9rem; font-weight: 500; }
+
+.report-note,
+.report-error {
+  margin: 0;
+  font-size: 0.81rem;
+  color: var(--ink-3);
+}
+.report-error { color: var(--bad); }
+
+.report-buttons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.report-btn {
+  flex: 1 1 auto;
+  min-width: 6.5rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  font-size: 0.86rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.report-btn:hover:not(:disabled) { border-color: currentColor; }
+.report-btn:disabled { opacity: 0.5; cursor: default; }
+.report-btn.is-works { color: var(--ok); }
+.report-btn.is-code_bad { color: var(--warn); }
+.report-btn.is-gone { color: var(--bad); }
+
+/* ---------- flagging ---------- */
+
+.flag-open,
+.flag-sent {
+  margin: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.81rem;
+  color: var(--ink-3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  text-align: left;
+}
+.flag-sent { text-decoration: none; cursor: default; }
+
+.flag-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.83rem;
+}
+.flag-form label { color: var(--ink-3); }
+
+.flag-form textarea,
+.flag-form input {
+  font: inherit;
+  font-family: var(--f-body);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+  resize: vertical;
+}
+
+.flag-actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
+
+.flag-cancel,
+.flag-send {
+  padding: 0.35rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.84rem;
+  cursor: pointer;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+}
+.flag-send {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+.flag-send:disabled { opacity: 0.5; cursor: default; }
