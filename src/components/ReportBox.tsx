@@ -23,6 +23,9 @@ const LABELS: Record<string, string> = {
  */
 export default function ReportBox({ bathroom, near, onReported }: Props) {
   const [done, setDone] = useState<ReportKind | null>(() => reportedKind(bathroom.id))
+  // Distinguishes "we recorded that" from "you'd already told us", which are
+  // different facts and shouldn't share a message.
+  const [duplicate, setDuplicate] = useState(false)
   const [busy, setBusy] = useState<ReportKind | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -54,6 +57,8 @@ export default function ReportBox({ bathroom, near, onReported }: Props) {
           troubles: res.troubles ?? bathroom.troubles,
           last_confirmed: res.last_confirmed ?? bathroom.last_confirmed,
         })
+      } else {
+        setDuplicate(res.reason === 'already_reported')
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save that report.")
@@ -65,8 +70,12 @@ export default function ReportBox({ bathroom, near, onReported }: Props) {
   if (done) {
     return (
       <div className="report is-done">
-        <span className="report-q">Thanks — logged as “{LABELS[done] ?? done}”.</span>
-        <p className="report-note">You can report this one again tomorrow.</p>
+        <span className="report-q">
+          {duplicate
+            ? 'You already reported this one today.'
+            : `Thanks — logged as “${LABELS[done] ?? done}”.`}
+        </span>
+        <p className="report-note">You can report it again tomorrow.</p>
       </div>
     )
   }
