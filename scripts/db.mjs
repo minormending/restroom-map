@@ -10,9 +10,9 @@
  *   node scripts/db.mjs query "<sql>"       run ad-hoc SQL
  *   node scripts/db.mjs query -             read SQL from stdin
  *
- * Needs SUPABASE_DB_URL in .env — the Session pooler connection string from
- * Supabase's Database settings, with the password filled in. That file is
- * gitignored; the credential never enters the repo.
+ * Needs SUPABASE_DB_PASSWORD in .env — just the password. Host, port and user
+ * are derived from VITE_SUPABASE_URL. Set SUPABASE_DB_URL instead if you'd
+ * rather supply a full connection string. .env is gitignored either way.
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
@@ -36,32 +36,56 @@ function loadEnv() {
   }
 }
 
-function connectionString() {
+function dbConfig() {
   loadEnv()
-  const url = process.env.SUPABASE_DB_URL
-  if (!url) {
-    console.error(`SUPABASE_DB_URL is not set.
-
-Supabase dashboard -> Project Settings -> Database -> Connection string
--> "Session pooler". Copy it, replace [YOUR-PASSWORD] with the database
-password, and add it to .env as:
-
-  SUPABASE_DB_URL=postgresql://postgres.<ref>:<password>@...pooler.supabase.com:5432/postgres
-
-.env is gitignored, so it stays on this machine.`)
-    process.exit(1)
-  }
-  return url
-}
-
-async function withClient(fn) {
-  const client = new pg.Client({
-    connectionString: connectionString(),
+  const common = {
     // Supabase terminates TLS at the pooler with a cert Node's default trust
     // store doesn't carry. The channel is still encrypted.
     ssl: { rejectUnauthorized: false },
     application_name: 'restroom-map/scripts/db.mjs',
-  })
+    connectionTimeoutMillis: 15_000,
+  }
+
+  // A full URL wins if you've set one.
+  if (process.env.SUPABASE_DB_URL) {
+    return { connectionString: process.env.SUPABASE_DB_URL, ...common }
+  }
+
+  // Otherwise derive it: the project ref is already in the public API URL, and
+  // the password is passed as a field rather than interpolated into a URL, so
+  // characters like @ : / # need no escaping.
+  const password = process.env.SUPABASE_DB_PASSWORD
+  const ref = /https:\/\/([a-z0-9]+)\.supabase\.co/.exec(
+    process.env.VITE_SUPABASE_URL ?? '')?.[1]
+
+  if (password && ref) {
+    return {
+      host: process.env.SUPABASE_DB_HOST ?? 'aws-0-us-east-1.pooler.supabase.com',
+      port: Number(process.env.SUPABASE_DB_PORT ?? 5432),
+      database: 'postgres',
+      user: `postgres.${ref}`,
+      password,
+      ...common,
+    }
+  }
+
+  console.error(`No database credentials found.
+
+Add ONE line to .env:
+
+  SUPABASE_DB_PASSWORD=your-database-password
+
+That is the password from when the project was created. If it wasn't saved,
+reset it at Database Settings -> Database password. Everything else (host,
+port, user) is derived from VITE_SUPABASE_URL.
+
+Alternatively set a full SUPABASE_DB_URL if you'd rather paste a connection
+string. .env is gitignored either way.`)
+  process.exit(1)
+}
+
+async function withClient(fn) {
+  const client = new pg.Client(dbConfig())
   await client.connect()
   try {
     return await fn(client)

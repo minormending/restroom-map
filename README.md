@@ -64,10 +64,23 @@ pnpm db:query "select count(*) from bathrooms"
 node scripts/db.mjs file supabase/seed.sql
 ```
 
-It needs `SUPABASE_DB_URL` in `.env` — the **Session pooler** connection string
-from Project Settings → Database, with the password filled in. Unlike the anon
-key, that string is a genuine secret: it is full database access, it must never
-reach the bundle, and `.env` is gitignored so it stays on your machine.
+It needs one line in `.env`:
+
+```
+SUPABASE_DB_PASSWORD=your-database-password
+```
+
+Host, port and user are derived from `VITE_SUPABASE_URL`, and the password is
+passed to the driver as a field rather than interpolated into a URL, so
+characters like `@` and `:` need no escaping. Set `SUPABASE_DB_URL` instead if
+you prefer a full connection string, or `SUPABASE_DB_HOST` if the derived
+pooler host is wrong.
+
+Unlike the publishable key, this password is a genuine secret: full database
+access, bypassing RLS. `.env` is gitignored so it stays on your machine.
+
+Note the direct-connection host (`db.<ref>.supabase.co`) is IPv6-only, which is
+why this uses the pooler.
 
 Migrations are tracked in a `schema_migrations` table by filename and checksum.
 If the schema was built by hand before this tool existed, record the existing
