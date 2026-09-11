@@ -25,6 +25,20 @@ switches to live reads.
 > render blank under `pnpm dev`. `pnpm build && pnpm preview` works correctly.
 > See `src/map/worker.ts`.
 
+> **Seeing stale content after a rebuild or deploy?** The PWA service worker
+> precaches the bundle, so a fresh build can keep serving the old one. The SW
+> now ships `skipWaiting` + `clientsClaim`, so updates apply on the next reload
+> — but if you're ever unsure what you're looking at, run this in the browser
+> console and reload:
+>
+> ```js
+> for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister()
+> for (const k of await caches.keys()) await caches.delete(k)
+> ```
+>
+> To confirm which bundle is live, compare the hash in the page source against
+> `dist/index.html`.
+
 ## Database
 
 SQL in `supabase/migrations/` runs in order — paste into the Supabase SQL editor
