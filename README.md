@@ -52,6 +52,31 @@ or `supabase db push` if you have the CLI.
 | `20260911000004_grants.sql` | Data API grants (create the project with auto-expose OFF) |
 | `seed.sql` | 30 Lower Manhattan starter rows (generated) |
 
+### Running SQL
+
+`scripts/db.mjs` connects directly to Postgres, so migrations and one-off
+queries don't have to go through the dashboard SQL editor.
+
+```bash
+pnpm db:status                        # applied vs pending migrations
+pnpm db:migrate                       # apply pending ones, each in a transaction
+pnpm db:query "select count(*) from bathrooms"
+node scripts/db.mjs file supabase/seed.sql
+```
+
+It needs `SUPABASE_DB_URL` in `.env` — the **Session pooler** connection string
+from Project Settings → Database, with the password filled in. Unlike the anon
+key, that string is a genuine secret: it is full database access, it must never
+reach the bundle, and `.env` is gitignored so it stays on your machine.
+
+Migrations are tracked in a `schema_migrations` table by filename and checksum.
+If the schema was built by hand before this tool existed, record the existing
+files as already applied instead of re-running them:
+
+```bash
+node scripts/db.mjs migrate --baseline
+```
+
 Regenerate the seed after editing `src/data/seed.json`:
 
 ```bash
