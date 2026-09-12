@@ -61,7 +61,13 @@ export async function fetchDetail(id: string): Promise<Partial<Bathroom>> {
 
   // A locked code is an expected outcome, not a failure — render the row
   // without it rather than failing the whole sheet.
-  const codeRow = code.error ? null : (code.data as { code: string }[] | null)?.[0]
+  type CodeRow = { code: string | null; locked: boolean; cost: number }
+  const codeRow = code.error ? null : (code.data as CodeRow[] | null)?.[0]
 
-  return { ...(detail.data ?? {}), code: codeRow?.code ?? null }
+  return {
+    ...(detail.data ?? {}),
+    code: codeRow?.code ?? null,
+    code_locked: codeRow?.locked ?? false,
+    code_cost: codeRow?.cost,
+  }
 }

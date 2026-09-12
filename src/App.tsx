@@ -237,6 +237,7 @@ export default function App() {
           account={account}
           onClose={() => setSelectedId(null)}
           onReported={onReported}
+          onSpent={refreshBalance}
         />
       )}
     </div>

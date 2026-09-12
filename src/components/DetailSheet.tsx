@@ -1,4 +1,5 @@
 import CodeEditor from './CodeEditor'
+import UnlockCode from './UnlockCode'
 import Comments from './Comments'
 import FlagLink from './FlagLink'
 import ReportBox from './ReportBox'
@@ -16,6 +17,7 @@ interface Props {
   account: Account | null
   onClose: () => void
   onReported: (id: string, patch: Partial<Bathroom>) => void
+  onSpent: () => void
 }
 
 const AMENITIES = [
@@ -25,7 +27,7 @@ const AMENITIES = [
 ] as const
 
 export default function DetailSheet({
-  bathroom, detail, loading, near, account, onClose, onReported,
+  bathroom, detail, loading, near, account, onClose, onReported, onSpent,
 }: Props) {
   const [localCode, setLocalCode] = useState<string | null>(null)
   const merged = { ...bathroom, ...detail, ...(localCode ? { code: localCode } : {}) }
@@ -55,6 +57,17 @@ export default function DetailSheet({
             <span className="code-value is-pending">Checking…</span>
           ) : merged.code ? (
             <span className="code-value">{merged.code}</span>
+          ) : merged.code_locked ? (
+            <>
+              <span className="code-value is-locked" aria-label="Locked">••••</span>
+              <UnlockCode
+                bathroomId={merged.id}
+                cost={merged.code_cost ?? 2}
+                account={account}
+                onUnlocked={setLocalCode}
+                onSpent={onSpent}
+              />
+            </>
           ) : (
             <span className="code-value is-empty">
               Not recorded yet — there's a keypad, but nobody has added the code.

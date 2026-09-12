@@ -36,3 +36,21 @@ export const REASON_LABELS: Record<string, string> = {
   spend_unlock: 'Unlocked a code',
   manual_adjustment: 'Adjustment',
 }
+
+export interface UnlockResult {
+  ok: boolean
+  charged?: number
+  code?: string
+  balance?: number
+  reason?: 'insufficient'
+  cost?: number
+}
+
+export async function unlockCode(bathroomId: string): Promise<UnlockResult> {
+  if (!supabase) throw new Error('Unlocking needs a database connection.')
+  const { data, error } = await supabase.rpc('unlock_code', { p_bathroom_id: bathroomId })
+  if (error) {
+    throw new Error(error.code === '42501' ? 'Sign in first.' : error.message)
+  }
+  return data as UnlockResult
+}

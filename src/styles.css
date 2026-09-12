@@ -868,3 +868,18 @@ button { font: inherit; color: inherit; }
 .ledger-delta.is-negative { color: var(--bad); }
 
 .profile-sheet .sheet-foot { font-size: 0.81rem; }
+
+/* ---------- locked codes ---------- */
+
+.code-value.is-locked {
+  letter-spacing: 0.3em;
+  color: var(--ink-3);
+}
+
+.unlock { align-self: flex-start; margin-top: 0.4rem; }
+
+.locked-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.81rem;
+  color: var(--ink-3);
+}

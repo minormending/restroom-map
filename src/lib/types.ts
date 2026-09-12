@@ -51,6 +51,8 @@ export interface Bathroom {
   changing_table?: boolean | null
   gender_neutral?: boolean | null
   code?: string | null
+  code_locked?: boolean
+  code_cost?: number
 }
 
 export const REPORT_KINDS = ['works', 'code_bad', 'gone', 'inaccessible', 'dirty'] as const

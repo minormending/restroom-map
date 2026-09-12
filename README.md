@@ -108,8 +108,21 @@ Two design points worth not undoing:
 - **Credits are an append-only ledger**, never a mutable balance. You will need
   to claw back fraud, and you cannot audit a number.
 
-`can_view_code()` returns `true` for everyone in v0. Tiered access is a change
-to that one function — no migration, no client rewrite.
+### Tiered codes
+
+`can_view_code()` is the single gate. As of migration 011 a code costs
+`unlock_cost()` credits, with three carve-outs: a place you submitted, a code
+you submitted, and anything you have already unlocked are always free to you.
+
+To turn gating **off** again, that is still one function:
+
+```sql
+create or replace function can_view_code(p_user uuid, p_bathroom uuid)
+returns boolean language sql stable as $$ select true; $$;
+```
+
+Nothing else changes — no data migration, no client rewrite. Prices live in
+`unlock_cost()`.
 
 ## Marker encoding
 
