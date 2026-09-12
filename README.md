@@ -20,10 +20,15 @@ Opens on the bundled Lower Manhattan sample data — no Supabase project needed.
 Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env` and the same code
 switches to live reads.
 
-> **Dev-server caveat:** MapLibre parses GeoJSON and vector tiles in a web
-> worker. Vite's dev server does not reliably serve that worker, so the map can
-> render blank under `pnpm dev`. `pnpm build && pnpm preview` works correctly.
-> See `src/map/worker.ts`.
+> **Testing something location-dependent?** In dev only, `?at=<lat>,<lng>`
+> overrides the browser's position — e.g.
+> `http://localhost:5173/restroom-map/?at=40.7115,-74.0111`. The branch is
+> behind `import.meta.env.DEV`, a compile-time constant, so it is eliminated
+> from production builds entirely.
+
+> **If the dev server serves stale code** after an edit, its watcher has missed
+> the change — restart it. This bites often enough to be worth knowing before
+> you spend an hour debugging a fix that was never actually served.
 
 > **Seeing stale content after a rebuild or deploy?** The PWA service worker
 > precaches the bundle, so a fresh build can keep serving the old one. The SW

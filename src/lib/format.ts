@@ -22,19 +22,29 @@ export function confidenceLine(
   if (confirms === 0 && troubles === 0) {
     return { text: 'Nobody has confirmed this one yet.', tone: 'unknown' }
   }
+
+  const troubleNote = `${plural(troubles, 'report')} of trouble.`
+
+  // Nothing to be confident about yet, but somebody has complained.
+  if (confirms === 0) {
+    return { text: `Nobody has confirmed this yet. ${troubleNote}`, tone: 'warn' }
+  }
+
   if (troubles >= 2 && troubles > confirms) {
     return {
       text: `${plural(troubles, 'recent report')} say this is gone or the code has changed.`,
       tone: 'warn',
     }
   }
+
   const when = relativeDays(lastConfirmed)
   const who = plural(confirms, 'person').replace('persons', 'people')
   const base = when
     ? `Confirmed working ${when} by ${who}.`
     : `Confirmed by ${who}.`
+
   return {
-    text: troubles > 0 ? `${base} ${plural(troubles, 'report')} of trouble.` : base,
+    text: troubles > 0 ? `${base} ${troubleNote}` : base,
     tone: troubles > 0 ? 'warn' : 'good',
   }
 }

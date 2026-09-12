@@ -61,6 +61,21 @@ export default function App() {
   // Ask once on load. A refusal or a timeout is an ordinary outcome, not an
   // error state — the map still opens somewhere useful and search still works.
   useEffect(() => {
+    // Dev-only location override: ?at=<lat>,<lng>. Testing anything that
+    // depends on where you are is otherwise impossible from a desk.
+    // import.meta.env.DEV is a compile-time constant, so this whole branch is
+    // eliminated from production builds — it cannot be triggered by a visitor.
+    if (import.meta.env.DEV) {
+      const at = new URLSearchParams(window.location.search).get('at')
+      const [lat, lng] = (at ?? '').split(',').map(Number)
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        setUserLocation([lng, lat])
+        setFlyTo({ center: [lng, lat], zoom: 16.5, nonce: Date.now() })
+        setLocStatus('ok')
+        return
+      }
+    }
+
     if (!navigator.geolocation) { setLocStatus('unsupported'); return }
     setLocStatus('locating')
     navigator.geolocation.getCurrentPosition(
