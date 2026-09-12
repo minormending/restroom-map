@@ -3,12 +3,14 @@ import type { MapLibreMap } from 'maplibre-gl'
 import AddPlace from './components/AddPlace'
 import AuthButton from './components/AuthButton'
 import DetailSheet from './components/DetailSheet'
+import Profile from './components/Profile'
 import FiltersPanel from './components/Filters'
 import SearchBar from './components/SearchBar'
 import {
   ACCURACY_LIMIT_M, FALLBACK_CENTER, FALLBACK_LABEL, FALLBACK_ZOOM, USING_SEED_DATA,
 } from './lib/config'
 import { currentAccount, onAccountChange, type Account } from './lib/auth'
+import { fetchBalance } from './lib/credits'
 import { fetchDetail, fetchInView } from './lib/data'
 import type { Bathroom, Bounds, Filters } from './lib/types'
 import MapView from './map/MapView'
@@ -42,6 +44,8 @@ export default function App() {
   )
   const [account, setAccount] = useState<Account | null>(null)
   const [adding, setAdding] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [balance, setBalance] = useState<number | null>(null)
   const [mapCenter, setMapCenter] = useState<[number, number]>(FALLBACK_CENTER)
 
   const requestId = useRef(0)
@@ -50,6 +54,15 @@ export default function App() {
     void currentAccount().then(setAccount)
     return onAccountChange(setAccount)
   }, [])
+
+  // Credits change as a side effect of other people's actions, so re-read on
+  // sign-in and whenever this session does something that could earn.
+  const refreshBalance = useCallback(() => {
+    if (!account) { setBalance(null); return }
+    void fetchBalance().then(setBalance).catch(() => setBalance(null))
+  }, [account])
+
+  useEffect(refreshBalance, [refreshBalance])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -158,7 +171,11 @@ export default function App() {
             Add a place
           </button>
         )}
-        <AuthButton account={account} />
+        <AuthButton
+          account={account}
+          balance={balance}
+          onOpenProfile={() => { setSelectedId(null); setProfileOpen(true) }}
+        />
       </div>
 
       <div className="banners">
@@ -191,6 +208,10 @@ export default function App() {
         onSelect={setSelectedId}
       />
 
+      {profileOpen && account && (
+        <Profile account={account} onClose={() => setProfileOpen(false)} />
+      )}
+
       {adding && <div className="crosshair" aria-hidden="true" />}
 
       {adding && (
@@ -199,6 +220,7 @@ export default function App() {
           onCancel={() => setAdding(false)}
           onAdded={(id) => {
             setAdding(false)
+            refreshBalance()
             // Re-query so the new pin appears, then open it.
             setView((v) => (v ? { ...v } : v))
             setSelectedId(id)
@@ -206,7 +228,7 @@ export default function App() {
         />
       )}
 
-      {selected && !adding && (
+      {selected && !adding && !profileOpen && (
         <DetailSheet
           bathroom={selected}
           detail={detail}
