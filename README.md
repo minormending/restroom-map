@@ -148,13 +148,37 @@ For live data, add repository **variables** (not secrets — both values are
 public by design and get baked into the bundle): `VITE_SUPABASE_URL`,
 `VITE_SUPABASE_ANON_KEY`.
 
-## Things to settle before this goes anywhere public
+## Moderation
 
-- Privacy policy and terms. Google's OAuth consent screen requires a privacy
-  policy URL for production apps, so this lands with M2 at the latest.
-- A business removal path — that's what `flags.contact_email` is for.
-- Tile provider. CARTO's public styles need no key and are fine at this scale,
-  but read their terms before real traffic.
-- Whether to seed from OpenStreetMap at all. ODbL has share-alike provisions on
-  derived databases; `bathrooms.osm_id` exists so imports stay separable, but
-  decide before the first import, not after.
+```bash
+pnpm db:queue                          # open flags, takedown requests first
+node scripts/db.mjs hide <id> "why"    # off the map immediately
+node scripts/db.mjs unhide <id>        # put it back
+node scripts/db.mjs resolve <flag-id>  # mark a flag dealt with
+```
+
+Hiding is a soft delete: the place, its reports and its notes all survive, so a
+mistaken or disputed takedown is reversible. The reason is recorded on the row
+and a resolved flag documents who did what, because nobody reconstructs that
+later.
+
+Business removal requests arrive through the same queue and sort to the top —
+`awaiting_reply` marks anything with a contact address on it.
+
+## Still to settle before this goes public
+
+- **Fill in the placeholders** in `public/privacy.html` and `public/terms.html`:
+  every `[contact address]` and `[jurisdiction]`. Both pages carry a visible
+  banner saying so, which is deliberate — it should be impossible to ship them
+  unnoticed. Both were drafted to describe this system accurately; that is not
+  the same as being legally sufficient, and neither has been reviewed.
+- **Google's consent screen** is in Testing mode. Moving it to Production needs
+  the privacy policy URL — `https://<your site>/privacy.html`.
+- **Tile provider.** CARTO's public styles need no key and are fine at this
+  scale, but read their terms before real traffic.
+- **Whether to seed from OpenStreetMap at all.** ODbL has share-alike
+  provisions on derived databases; `bathrooms.osm_id` exists so imports stay
+  separable, but decide before the first import, not after.
+- **The 30 seeded places are unverified.** Real locations, but nobody has
+  checked one in person. Consider deleting them in favour of a handful you have
+  actually stood in front of.

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — Restroom Map</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="legal.css">
+</head>
+<body>
+<div class="wrap">
+<a class="back" href="./">← Back to the map</a>
+
+<h1>Privacy</h1>
+<p class="updated">Last updated 11 September 2026</p>
+
+<div class="note">
+<strong>Two things to fix before this is published.</strong> Replace every
+<span class="todo">[contact address]</span> below with a real address, and have
+the text reviewed by someone qualified. It was drafted to describe this system
+accurately, which is not the same as being legally sufficient where you operate.
+</div>
+
+<p>
+  Restroom Map is a map of publicly usable bathrooms that people contribute to.
+  This page describes exactly what it collects and what it deliberately does not.
+</p>
+
+<h2>What is collected</h2>
+
+<h3>If you sign in</h3>
+<p>
+  Signing in uses Google. Google gives us your account identifier, email
+  address, display name and profile picture link. We do not see or receive your
+  Google password.
+</p>
+
+<h3>What you contribute</h3>
+<p>
+  Places, door codes, reports that something works or doesn't, and notes. These
+  are <strong>public</strong>, and shown next to your display name.
+</p>
+
+<h3>Location</h3>
+<p>
+  If you allow it, your browser's position is used to centre the map. When you
+  report that a bathroom works, that position is also sent so the server can
+  check whether you were near it.
+</p>
+<p>
+  <strong>Those coordinates are not stored.</strong> The server computes a
+  single yes/no — were you within about 150 metres — records that, and discards
+  the position. There is no column anywhere holding where you were, and no
+  location history exists to request or to leak.
+</p>
+
+<h3>Network address</h3>
+<p>
+  To stop one person flooding the map with false reports, a salted one-way hash
+  of your IP address is kept as a counter. It is not stored alongside anything
+  you submitted, it cannot be turned back into an address on its own, and the
+  counters are deleted after two days.
+</p>
+
+<h2>Kept in your browser, not sent anywhere</h2>
+<ul>
+  <li>Your sign-in session, so you stay signed in.</li>
+  <li>Which places you reported recently, so the buttons stop asking.</li>
+</ul>
+
+<h2>What is never done</h2>
+<ul>
+  <li>No advertising, ad networks, tracking pixels or analytics of any kind.</li>
+  <li>No location history, and no profile of where you go.</li>
+  <li>Nothing sold, rented or shared for marketing.</li>
+</ul>
+<p>
+  This matters more here than on most sites. Where somebody looks for a bathroom
+  can imply things about their health, and the safest way to protect that is to
+  not have the data.
+</p>
+
+<h2>Who else is involved</h2>
+<ul>
+  <li><strong>Supabase</strong> — database and sign-in. Data is held in the United States (US East).</li>
+  <li><strong>GitHub Pages</strong> — serves the site itself.</li>
+  <li><strong>CARTO</strong> — map imagery. Your browser requests map tiles from them directly.</li>
+  <li><strong>Komoot (Photon)</strong> — place search. What you type into the search box is sent to them.</li>
+  <li><strong>Google</strong> — sign-in only.</li>
+</ul>
+
+<h2>Public versus private</h2>
+<p><strong>Public:</strong> places, codes, reports, notes, and your display name.</p>
+<p><strong>Not public:</strong> your email address, your credit balance and history, and which codes you have unlocked.</p>
+
+<h2>Deleting your data</h2>
+<p>
+  Write to <span class="todo">[contact address]</span> and your account, notes
+  and reports will be deleted. Places you added may be kept without your name
+  attached, because other people's reports depend on them — say so if you would
+  rather they were removed entirely.
+</p>
+<p>You can also revoke this app's access from your Google account settings at any time.</p>
+
+<h2>Children</h2>
+<p>This site is not directed at children under 13 and accounts are not knowingly created for them.</p>
+
+<h2>Changes</h2>
+<p>If this page changes materially, the date at the top changes with it.</p>
+
+<h2>Contact</h2>
+<p><span class="todo">[contact address]</span></p>
+
+<footer>
+  <a href="./">Map</a> · <a href="terms.html">Terms</a>
+</footer>
+</div>
+</body>
+</html>

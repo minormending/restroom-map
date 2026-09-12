@@ -10,6 +10,11 @@
  *   node scripts/db.mjs query "<sql>"       run ad-hoc SQL
  *   node scripts/db.mjs query -             read SQL from stdin
  *
+ *   node scripts/db.mjs queue               open moderation flags
+ *   node scripts/db.mjs hide <id> "<why>"   take a place off the map now
+ *   node scripts/db.mjs unhide <id>         put it back
+ *   node scripts/db.mjs resolve <flag-id>   mark a flag dealt with
+ *
  * Needs SUPABASE_DB_PASSWORD in .env — just the password. Host, port and user
  * are derived from VITE_SUPABASE_URL. Set SUPABASE_DB_URL instead if you'd
  * rather supply a full connection string. .env is gitignored either way.
@@ -200,6 +205,59 @@ async function migrate(client, { baseline }) {
   console.log(`\napplied ${pending.length} migration${pending.length === 1 ? '' : 's'}`)
 }
 
+// --- moderation ------------------------------------------------------------
+
+async function queue(client) {
+  const { rows } = await client.query(`
+    select id, created_at, coalesce(bathroom_name, target_type) as subject,
+           bathroom_status, reason, contact_email, awaiting_reply
+    from moderation_queue limit 50`)
+
+  if (rows.length === 0) return console.log('queue is empty')
+
+  for (const r of rows) {
+    const age = Math.round((Date.now() - new Date(r.created_at)) / 3600000)
+    console.log(`${r.awaiting_reply ? '! ' : '  '}${r.id}`)
+    console.log(`    ${r.subject}${r.bathroom_status ? ` [${r.bathroom_status}]` : ''}  ${age}h ago`)
+    console.log(`    ${r.reason}`)
+    if (r.contact_email) console.log(`    reply to: ${r.contact_email}`)
+  }
+  const waiting = rows.filter((r) => r.awaiting_reply).length
+  console.log(`\n${rows.length} open${waiting ? `, ${waiting} awaiting a reply (!)` : ''}`)
+}
+
+/**
+ * The kill switch. Hiding is a soft delete — the row, its reports and its
+ * comments all survive, so a mistake or a disputed takedown is reversible.
+ */
+async function hide(client, id, why) {
+  const { rows } = await client.query(
+    `update bathrooms set status='hidden', hidden_at=now(), hidden_reason=$2
+     where id=$1 and status<>'removed' returning name, status`, [id, why])
+  if (rows.length === 0) throw new Error(`no such place: ${id}`)
+
+  await client.query(
+    `insert into flags (target_type, target_id, reason, resolved_at)
+     values ('bathroom', $1, $2, now())`, [id, `hidden by operator: ${why}`])
+  console.log(`hidden: ${rows[0].name}\n  reason: ${why}\n  reversible with: db.mjs unhide ${id}`)
+}
+
+async function unhide(client, id) {
+  const { rows } = await client.query(
+    `update bathrooms set status='active', hidden_at=null, hidden_reason=null
+     where id=$1 returning name`, [id])
+  if (rows.length === 0) throw new Error(`no such place: ${id}`)
+  console.log(`back on the map: ${rows[0].name}`)
+}
+
+async function resolve(client, id) {
+  const { rows } = await client.query(
+    `update flags set resolved_at=now() where id=$1 and resolved_at is null
+     returning reason`, [id])
+  if (rows.length === 0) throw new Error(`no open flag with id ${id}`)
+  console.log(`resolved: ${rows[0].reason}`)
+}
+
 // --- entry -----------------------------------------------------------------
 
 const [cmd, ...rest] = process.argv.slice(2)
@@ -217,6 +275,22 @@ const commands = {
     if (!sql?.trim()) throw new Error('usage: db.mjs query "<sql>"')
     printResult(await c.query(sql))
   },
+  queue: (c) => queue(c),
+  hide: (c) => {
+    const [id, ...why] = rest
+    if (!id || why.length === 0) {
+      throw new Error('usage: db.mjs hide <bathroom-id> "<reason>"')
+    }
+    return hide(c, id, why.join(' '))
+  },
+  unhide: (c) => {
+    if (!rest[0]) throw new Error('usage: db.mjs unhide <bathroom-id>')
+    return unhide(c, rest[0])
+  },
+  resolve: (c) => {
+    if (!rest[0]) throw new Error('usage: db.mjs resolve <flag-id>')
+    return resolve(c, rest[0])
+  },
 }
 
 if (!cmd || !(cmd in commands)) {
@@ -226,7 +300,12 @@ if (!cmd || !(cmd in commands)) {
   migrate                 apply pending migrations
   migrate --baseline      record pending files as applied WITHOUT running them
   file <path.sql>         run one SQL file
-  query "<sql>"           run ad-hoc SQL ("-" reads stdin)`)
+  query "<sql>"           run ad-hoc SQL ("-" reads stdin)
+
+  queue                   open moderation flags, takedowns first
+  hide <id> "<reason>"    take a place off the map immediately
+  unhide <id>             put it back
+  resolve <flag-id>       mark a flag dealt with`)
   process.exit(1)
 }
 

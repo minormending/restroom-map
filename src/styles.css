@@ -883,3 +883,36 @@ button { font: inherit; color: inherit; }
   font-size: 0.81rem;
   color: var(--ink-3);
 }
+
+/* ---------- legal links ---------- */
+
+.legal-links {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.5rem;
+  z-index: 6;
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+}
+.legal-links a {
+  color: var(--ink-3);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 0.15rem 0.45rem;
+  opacity: 0.9;
+}
+.legal-links a:hover { color: var(--accent); border-color: var(--accent); opacity: 1; }
+
+/* The detail sheet covers the bottom-left on phones. */
+@media (max-width: 48rem) {
+  .sheet ~ .legal-links { display: none; }
+}
+
+.flag-intro {
+  margin: 0 0 0.3rem;
+  font-size: 0.82rem;
+  color: var(--ink-2);
+}

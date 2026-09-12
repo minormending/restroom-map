@@ -42,12 +42,16 @@ export default function FlagLink({ bathroomId }: Props) {
 
   return (
     <div className="flag-form">
+      <p className="flag-intro">
+        Run this place and want it off the map? Say so below — it comes down,
+        and you don't have to explain why.
+      </p>
       <label htmlFor="flag-reason">What's wrong with it?</label>
       <textarea
         id="flag-reason"
         rows={3}
         value={reason}
-        placeholder="Wrong location, shouldn't be listed, offensive content…"
+        placeholder="I'm the owner and want this removed / wrong location / offensive content…"
         onChange={(e) => setReason(e.target.value)}
       />
       <label htmlFor="flag-email">Email, if you want a reply (optional)</label>

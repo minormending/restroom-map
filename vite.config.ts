@@ -30,6 +30,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // These are real files, not app routes — don't hand them index.html.
+        navigateFallbackDenylist: [/privacy\.html$/, /terms\.html$/],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
