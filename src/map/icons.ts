@@ -55,12 +55,13 @@ const PIN_BODY =
 
 function pinSvg(venue: VenueType, fill: Fill): string {
   const color = FILL_COLORS[fill]
-  const dashed = fill === 'unverified'
   const hole = GLYPH_HOLES[venue]
+  // An earlier version dashed the outline of unverified pins. At the size a
+  // pin actually renders on a phone that reads as a torn edge, not a style —
+  // and grey against four saturated hues already says "nobody has confirmed
+  // this". Solid outline for every pin.
   return `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="88" viewBox="0 0 32 44">
-<path d="${PIN_BODY}" fill="${color}" stroke="#FFFFFF" stroke-width="1.6"${
-    dashed ? ' stroke-dasharray="3 2.2"' : ''
-  }/>
+<path d="${PIN_BODY}" fill="${color}" stroke="#FFFFFF" stroke-width="1.6"/>
 <circle cx="16" cy="15" r="6.7" fill="#FFFFFF"/>
 <g transform="translate(11.6,10.6)"><path d="${GLYPHS[venue]}" fill="${color}"/>${
     hole ? `<path d="${hole}" fill="#FFFFFF"/>` : ''

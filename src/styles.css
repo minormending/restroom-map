@@ -916,3 +916,33 @@ button { font: inherit; color: inherit; }
   font-size: 0.82rem;
   color: var(--ink-2);
 }
+
+/* ---------- narrow screens ----------
+   This is a phone-first errand: someone is standing in the street. Measured at
+   375px, three things were wrong — the banner ran to the viewport edge, the
+   legal links sat on top of the map attribution (which must stay legible), and
+   the search box was squeezed under 190px by its neighbours. */
+
+.banners { right: 0.75rem; }
+
+/* Always clear the attribution strip, which is full-width on a phone. */
+.legal-links { bottom: 2.3rem; }
+
+@media (max-width: 30rem) {
+  .top-bar { gap: 0.35rem; }
+
+  .search { min-width: 0; }
+
+  .filters-toggle,
+  .signin,
+  .add-place,
+  .account-chip {
+    padding: 0.6rem 0.6rem;
+    font-size: 0.88rem;
+  }
+
+  /* The name is redundant next to the avatar when space is this tight. */
+  .account-name { display: none; }
+
+  .sheet { max-height: 78vh; }
+}

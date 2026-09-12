@@ -63,7 +63,7 @@ export default function SearchBar({ near, onPick }: Props) {
       <input
         type="search"
         value={query}
-        placeholder="Search a place or address"
+        placeholder="Search a place"
         aria-label="Search for a place"
         autoComplete="off"
         onChange={(e) => setQuery(e.target.value)}
