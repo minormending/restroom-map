@@ -1,5 +1,9 @@
+import CodeEditor from './CodeEditor'
+import Comments from './Comments'
 import FlagLink from './FlagLink'
 import ReportBox from './ReportBox'
+import type { Account } from '../lib/auth'
+import { useState } from 'react'
 import { confidenceLine } from '../lib/format'
 import { ACCESS_LABELS, VENUE_LABELS, fillFor, type Bathroom } from '../lib/types'
 import { fillColor } from '../map/icons'
@@ -9,6 +13,7 @@ interface Props {
   detail: Partial<Bathroom> | null
   loading: boolean
   near: [number, number] | null
+  account: Account | null
   onClose: () => void
   onReported: (id: string, patch: Partial<Bathroom>) => void
 }
@@ -20,9 +25,10 @@ const AMENITIES = [
 ] as const
 
 export default function DetailSheet({
-  bathroom, detail, loading, near, onClose, onReported,
+  bathroom, detail, loading, near, account, onClose, onReported,
 }: Props) {
-  const merged = { ...bathroom, ...detail }
+  const [localCode, setLocalCode] = useState<string | null>(null)
+  const merged = { ...bathroom, ...detail, ...(localCode ? { code: localCode } : {}) }
   const confidence = confidenceLine(merged.confirms, merged.troubles, merged.last_confirmed)
   const accent = fillColor(fillFor(merged))
 
@@ -54,6 +60,13 @@ export default function DetailSheet({
               Not recorded yet — there's a keypad, but nobody has added the code.
             </span>
           )}
+          {account && (
+            <CodeEditor
+              bathroomId={merged.id}
+              currentCode={merged.code ?? null}
+              onSaved={setLocalCode}
+            />
+          )}
         </div>
       )}
 
@@ -80,6 +93,8 @@ export default function DetailSheet({
       </ul>
 
       <ReportBox bathroom={merged} near={near} onReported={onReported} />
+
+      <Comments bathroomId={merged.id} account={account} />
 
       <div className="sheet-foot">
         <FlagLink bathroomId={merged.id} />

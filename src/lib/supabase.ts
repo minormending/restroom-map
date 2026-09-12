@@ -8,5 +8,9 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL, USING_SEED_DATA } from './config'
 export const supabase: SupabaseClient | null = USING_SEED_DATA
   ? null
   : createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false }, // no accounts until M2
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true, // OAuth returns here with tokens in the URL
+      },
     })

@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MapLibreMap } from 'maplibre-gl'
+import AddPlace from './components/AddPlace'
+import AuthButton from './components/AuthButton'
 import DetailSheet from './components/DetailSheet'
 import FiltersPanel from './components/Filters'
 import SearchBar from './components/SearchBar'
 import {
   ACCURACY_LIMIT_M, FALLBACK_CENTER, FALLBACK_LABEL, FALLBACK_ZOOM, USING_SEED_DATA,
 } from './lib/config'
+import { currentAccount, onAccountChange, type Account } from './lib/auth'
 import { fetchDetail, fetchInView } from './lib/data'
 import type { Bathroom, Bounds, Filters } from './lib/types'
 import MapView from './map/MapView'
@@ -37,8 +40,16 @@ export default function App() {
   const [dark, setDark] = useState(
     () => window.matchMedia('(prefers-color-scheme: dark)').matches,
   )
+  const [account, setAccount] = useState<Account | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [mapCenter, setMapCenter] = useState<[number, number]>(FALLBACK_CENTER)
 
   const requestId = useRef(0)
+
+  useEffect(() => {
+    void currentAccount().then(setAccount)
+    return onAccountChange(setAccount)
+  }, [])
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -69,6 +80,8 @@ export default function App() {
   }, [])
 
   const onViewChange = useCallback((map: MapLibreMap) => {
+    const c = map.getCenter()
+    setMapCenter([c.lng, c.lat])
     const b = map.getBounds()
     setView({
       minLng: b.getWest(), minLat: b.getSouth(),
@@ -125,6 +138,12 @@ export default function App() {
           open={filtersOpen}
           onToggle={() => setFiltersOpen((o) => !o)}
         />
+        {account && !adding && (
+          <button type="button" className="add-place" onClick={() => { setSelectedId(null); setAdding(true) }}>
+            Add a place
+          </button>
+        )}
+        <AuthButton account={account} />
       </div>
 
       <div className="banners">
@@ -157,12 +176,28 @@ export default function App() {
         onSelect={setSelectedId}
       />
 
-      {selected && (
+      {adding && <div className="crosshair" aria-hidden="true" />}
+
+      {adding && (
+        <AddPlace
+          center={mapCenter}
+          onCancel={() => setAdding(false)}
+          onAdded={(id) => {
+            setAdding(false)
+            // Re-query so the new pin appears, then open it.
+            setView((v) => (v ? { ...v } : v))
+            setSelectedId(id)
+          }}
+        />
+      )}
+
+      {selected && !adding && (
         <DetailSheet
           bathroom={selected}
           detail={detail}
           loading={detailLoading}
           near={userLocation}
+          account={account}
           onClose={() => setSelectedId(null)}
           onReported={onReported}
         />
