@@ -165,6 +165,33 @@ later.
 Business removal requests arrive through the same queue and sort to the top —
 `awaiting_reply` marks anything with a contact address on it.
 
+## Importing
+
+```bash
+node scripts/import-nyc.mjs --bbox seed           # dry run, seeded area
+node scripts/import-nyc.mjs --bbox seed --apply   # write
+```
+
+NYC Open Data's "Public Restrooms" (`i7jb-7jku`): 1,066 rows, all with
+coordinates, `location_type` mapping cleanly onto `venue_type`.
+
+**It declares no licence.** No `license` field in its Socrata metadata, and
+NYC's terms neither grant nor forbid redistribution — they only disclaim
+warranty. That is ambiguity, not permission. Ask NYC Open Data before relying
+on it publicly. Every imported row records `import_source`, `import_id` and
+`import_licence`, so withdrawing them is one delete.
+
+The importer skips rows that are not `Operational` — a pin at a closed restroom
+sends someone on a walk to a locked door, which is the failure this whole app
+exists to avoid. It also refuses anything within 30m of an existing pin, and
+**reports** likely duplicates between 30m and 150m rather than acting on them:
+NYC lists two Columbus Park restrooms 120m apart and they are genuinely two
+buildings, so a radius wide enough to catch a carelessly placed pin is also
+wide enough to merge real ones.
+
+No dataset anywhere carries door codes. That part cannot be imported, which is
+both the bad news and the reason this project has a reason to exist.
+
 ## Still to settle before this goes public
 
 - **Fill in the placeholders** in `public/privacy.html` and `public/terms.html`:
