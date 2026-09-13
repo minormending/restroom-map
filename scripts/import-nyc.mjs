@@ -136,8 +136,8 @@ for (const r of keep) {
     `select name, import_source from bathrooms
      where status = 'active'
        and st_dwithin(geog, st_setsrid(st_makepoint($1,$2),4326)::geography, 30)
-       and (import_source is distinct from $3 or import_id is distinct from $4)
-     limit 1`, [r.lng, r.lat, SOURCE, r.import_id])
+       and import_source is distinct from $3
+     limit 1`, [r.lng, r.lat, SOURCE])
   if (near.length) { r.collidesWith = near[0].name; collisions.push(r) }
 }
 
