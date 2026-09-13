@@ -155,6 +155,10 @@ export default function App() {
 
   return (
     <div className="app">
+      {/* The map carries no visible heading, so a screen reader had nothing to
+          announce on arrival. Visually hidden, but present in the tree. */}
+      <h1 className="sr-only">Restroom Map — find a bathroom near you</h1>
+
       <div className="top-bar">
         <SearchBar
           near={userLocation ?? FALLBACK_CENTER}

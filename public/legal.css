@@ -24,8 +24,8 @@ p { margin: 0 0 .9rem; }
 ul { padding-left: 1.15rem; margin: 0 0 .9rem; }
 li { margin-bottom: .35rem; }
 strong { color: var(--ink); font-weight: 600; }
-.updated { color: var(--ink-3); font-size: .86rem; margin-bottom: 2rem; }
-.back { display: inline-block; margin-bottom: 2rem; font-size: .9rem; }
+.updated { color: var(--ink-2); font-size: .86rem; margin-bottom: 2rem; }
+.back { display: inline-block; margin-bottom: 2rem; font-size: .9rem; padding: .3rem 0; }
 .note {
   background: var(--warn-bg); color: var(--warn-ink);
   border-radius: 8px; padding: .85rem 1rem; margin: 0 0 2rem; font-size: .9rem;
@@ -36,4 +36,5 @@ strong { color: var(--ink); font-weight: 600; }
   border-radius: 6px; padding: .15rem .45rem; font-weight: 600;
   font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: .85em;
 }
+footer a { display: inline-block; padding: .3rem 0; }
 footer { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--rule); font-size: .85rem; color: var(--ink-3); }
