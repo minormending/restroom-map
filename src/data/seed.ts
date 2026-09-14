@@ -1,4 +1,6 @@
-import type { Bathroom, AccessKind, VenueType } from '../lib/types'
+import type {
+  Bathroom, AccessKind, ChangingTableAccess, VenueType, WheelchairAccess,
+} from '../lib/types'
 import rows from './seed.json'
 
 /**
@@ -33,8 +35,8 @@ interface SeedRow {
   last_confirmed_days?: number
   address: string | null
   floor_hint: string | null
-  wheelchair: boolean | null
-  changing_table: boolean | null
+  wheelchair: WheelchairAccess | null
+  changing_table: ChangingTableAccess | null
   gender_neutral: boolean | null
 }
 

@@ -22,6 +22,18 @@ export const VENUE_LABELS: Record<VenueType, string> = {
   other: 'Other',
 }
 
+/**
+ * Neither of these is a yes/no question, which is why migration 016 widened
+ * the columns. "Partially accessible" and "there is a changing table but only
+ * in the women's room" are real answers, and rounding them to true or false
+ * is how somebody ends up standing outside a door they cannot use.
+ */
+export const WHEELCHAIR_ACCESS = ['full', 'partial', 'none'] as const
+export type WheelchairAccess = (typeof WHEELCHAIR_ACCESS)[number]
+
+export const CHANGING_TABLE_ACCESS = ['any', 'women_only', 'men_only', 'none'] as const
+export type ChangingTableAccess = (typeof CHANGING_TABLE_ACCESS)[number]
+
 export const ACCESS_LABELS: Record<AccessKind, string> = {
   open: 'Open — no code',
   code_required: 'Code required',
@@ -44,8 +56,8 @@ export interface Bathroom {
   // Detail-only fields, absent from the viewport payload.
   address?: string | null
   floor_hint?: string | null
-  wheelchair?: boolean | null
-  changing_table?: boolean | null
+  wheelchair?: WheelchairAccess | null
+  changing_table?: ChangingTableAccess | null
   gender_neutral?: boolean | null
   code?: string | null
   code_locked?: boolean

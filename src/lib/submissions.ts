@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { AccessKind, VenueType } from './types'
+import type { AccessKind, ChangingTableAccess, VenueType, WheelchairAccess } from './types'
 
 export interface NewPlace {
   name: string
@@ -10,8 +10,8 @@ export interface NewPlace {
   address?: string
   floor_hint?: string
   code?: string
-  wheelchair?: boolean | null
-  changing_table?: boolean | null
+  wheelchair?: WheelchairAccess | null
+  changing_table?: ChangingTableAccess | null
   gender_neutral?: boolean | null
 }
 

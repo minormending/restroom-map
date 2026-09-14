@@ -476,6 +476,9 @@ button { font: inherit; color: inherit; }
 }
 .amenities .yes .amenity-mark { background: var(--ok); color: #fff; }
 .amenities .no .amenity-mark { background: var(--rule); color: var(--ink-2); }
+/* Not a softer yes. "Women's room only" and "partly step-free" are the rows
+   most worth stopping on, so they get the one mark that is neither. */
+.amenities .partial .amenity-mark { background: var(--warn); color: #fff; }
 
 .sheet-foot {
   margin: 0;

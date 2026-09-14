@@ -9,8 +9,10 @@ function withinBounds(b: Bathroom, v: Bounds): boolean {
 function matchesFilters(b: Bathroom, f: Filters): boolean {
   if (f.venues.size && !f.venues.has(b.venue_type)) return false
   if (f.access.size && !f.access.has(b.access_kind)) return false
-  // The bundled sample has no amenity data, so this can only ever exclude.
-  if (f.needsChanging && b.changing_table !== true) return false
+  // The bundled sample has no amenity data, so these can only ever exclude.
+  // A gendered changing table still counts as having one — the sheet says
+  // which, and hiding it from everyone helps nobody.
+  if (f.needsChanging && (b.changing_table == null || b.changing_table === 'none')) return false
   return true
 }
 
