@@ -9,6 +9,8 @@ function withinBounds(b: Bathroom, v: Bounds): boolean {
 function matchesFilters(b: Bathroom, f: Filters): boolean {
   if (f.venues.size && !f.venues.has(b.venue_type)) return false
   if (f.access.size && !f.access.has(b.access_kind)) return false
+  // The bundled sample has no amenity data, so this can only ever exclude.
+  if (f.needsChanging && b.changing_table !== true) return false
   return true
 }
 
@@ -35,6 +37,7 @@ export async function fetchInView(
     types: filters.venues.size ? ([...filters.venues] as VenueType[]) : null,
     access: filters.access.size ? ([...filters.access] as AccessKind[]) : null,
     max_results: maxResults,
+    needs_changing: filters.needsChanging,
   })
 
   if (error) throw new Error(error.message)

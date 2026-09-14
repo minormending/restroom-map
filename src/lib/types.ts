@@ -62,6 +62,7 @@ export interface Filters {
   venues: Set<VenueType>
   access: Set<AccessKind>
   hideTroubled: boolean
+  needsChanging: boolean
 }
 
 export interface Bounds {

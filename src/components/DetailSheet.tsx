@@ -5,7 +5,7 @@ import FlagLink from './FlagLink'
 import ReportBox from './ReportBox'
 import type { Account } from '../lib/auth'
 import { useState } from 'react'
-import { confidenceLine } from '../lib/format'
+import { confidenceLine, describeDistance, metresBetween } from '../lib/format'
 import { ACCESS_LABELS, VENUE_LABELS, fillFor, type Bathroom } from '../lib/types'
 import { fillColor } from '../map/icons'
 
@@ -34,6 +34,12 @@ export default function DetailSheet({
   const confidence = confidenceLine(merged.confirms, merged.troubles, merged.last_confirmed)
   const accent = fillColor(fillFor(merged))
 
+  const away = near ? describeDistance(metresBetween(near, [merged.lng, merged.lat])) : null
+  // Universal Maps URL: resolves to the platform's own app on iOS and Android
+  // and to the web map on a desktop, without sniffing the user agent.
+  const directions =
+    `https://www.google.com/maps/dir/?api=1&destination=${merged.lat},${merged.lng}`
+
   return (
     <aside className="sheet" aria-label={`Details for ${merged.name}`}>
       <button type="button" className="sheet-close" onClick={onClose} aria-label="Close details">
@@ -46,6 +52,12 @@ export default function DetailSheet({
         </span>
         <h2>{merged.name}</h2>
         {merged.address && <p className="sheet-addr">{merged.address}</p>}
+        <p className="sheet-go">
+          {away && <span className="distance">{away}</span>}
+          <a className="directions" href={directions} target="_blank" rel="noreferrer noopener">
+            Directions
+          </a>
+        </p>
       </header>
 
       <p className={`confidence tone-${confidence.tone}`}>{confidence.text}</p>

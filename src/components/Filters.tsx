@@ -19,7 +19,7 @@ function toggle<T>(set: Set<T>, value: T): Set<T> {
 }
 
 export default function FiltersPanel({ filters, onChange, open, onToggle }: Props) {
-  const count = filters.venues.size + filters.access.size
+  const count = filters.venues.size + filters.access.size + (filters.needsChanging ? 1 : 0)
 
   return (
     <div className={`filters${open ? ' is-open' : ''}`}>
@@ -48,6 +48,20 @@ export default function FiltersPanel({ filters, onChange, open, onToggle }: Prop
           </fieldset>
 
           <fieldset>
+            <legend>Needs</legend>
+            <div className="chips">
+              <button
+                type="button"
+                className={`chip${filters.needsChanging ? ' is-on' : ''}`}
+                aria-pressed={filters.needsChanging}
+                onClick={() => onChange({ ...filters, needsChanging: !filters.needsChanging })}
+              >
+                Changing table
+              </button>
+            </div>
+          </fieldset>
+
+          <fieldset>
             <legend>Place</legend>
             <div className="chips">
               {VENUE_TYPES.map((v: VenueType) => (
@@ -68,7 +82,9 @@ export default function FiltersPanel({ filters, onChange, open, onToggle }: Prop
             <button
               type="button"
               className="clear"
-              onClick={() => onChange({ ...filters, venues: new Set(), access: new Set() })}
+              onClick={() =>
+                onChange({ ...filters, venues: new Set(), access: new Set(), needsChanging: false })
+              }
             >
               Clear filters
             </button>

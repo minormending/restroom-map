@@ -48,3 +48,22 @@ export function confidenceLine(
     tone: troubles > 0 ? 'warn' : 'good',
   }
 }
+
+/** Metres between two [lng, lat] pairs. Haversine; good enough under a few km. */
+export function metresBetween(a: [number, number], b: [number, number]): number {
+  const R = 6_371_000
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(b[1] - a[1])
+  const dLng = toRad(b[0] - a[0])
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.sqrt(h))
+}
+
+/** Walking distances, rounded the way a person would say them. */
+export function describeDistance(metres: number): string {
+  if (metres < 100) return `${Math.round(metres / 10) * 10} m away`
+  if (metres < 1000) return `${Math.round(metres / 50) * 50} m away`
+  return `${(metres / 1000).toFixed(metres < 10_000 ? 1 : 0)} km away`
+}
