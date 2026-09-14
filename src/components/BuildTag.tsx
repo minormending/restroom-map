@@ -20,6 +20,10 @@ import { useState } from 'react'
 export default function BuildTag() {
   const [clearing, setClearing] = useState(false)
 
+  // A count renders as a version; anything else (a git-less build) is shown
+  // as-is, so it cannot be mistaken for one.
+  const label = /^\d+$/.test(__BUILD_ID__) ? `v${__BUILD_ID__}` : __BUILD_ID__
+
   const refresh = async () => {
     setClearing(true)
     try {
@@ -45,9 +49,10 @@ export default function BuildTag() {
       onClick={() => void refresh()}
       disabled={clearing}
       title="Reload and fetch the newest version"
+      // "Version v66" stutters; the spoken label takes the bare number.
       aria-label={`Version ${__BUILD_ID__}. Reload and fetch the newest version.`}
     >
-      {clearing ? 'updating…' : __BUILD_ID__}
+      {clearing ? 'updating…' : label}
     </button>
   )
 }

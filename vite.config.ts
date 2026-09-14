@@ -4,24 +4,32 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 /**
- * Which build this is, so a person looking at a stale page can say so.
+ * Which build this is, as a number a person can read out.
  *
  * The service worker precaches the bundle, and a hard refresh does not go
  * round it: the SW still controls the navigation and serves what it has. That
  * makes "am I looking at the current version" a question the page has to be
  * able to answer, because the browser's own controls cannot.
  *
- * The commit sha in CI and locally; a timestamp if git is unavailable, which
- * is still enough to tell two builds apart.
+ * Commits, counted. Monotonic, needs no bumping, and maps back to exactly one
+ * commit — v43 is the 43rd, findable with:
+ *
+ *   git rev-list --reverse HEAD | sed -n '43p'
+ *
+ * Note this needs full history. actions/checkout clones shallow unless told
+ * otherwise, which would pin every deployed build at 1; deploy.yml sets
+ * fetch-depth: 0 for exactly this reason.
+ *
+ * If git is not there at all — a tarball, say — it says so rather than
+ * inventing a number. A wrong version is worse than an obviously missing one
+ * when the whole point is reading it out when something looks wrong.
  */
 function buildId(): string {
-  const sha = process.env.GITHUB_SHA
-  if (sha) return sha.slice(0, 7)
   try {
-    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
-      .toString().trim()
+    return execSync('git rev-list --count HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString().trim() || 'dev'
   } catch {
-    return new Date().toISOString().slice(0, 16).replace('T', ' ')
+    return 'dev'
   }
 }
 
