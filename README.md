@@ -124,6 +124,47 @@ returns boolean language sql stable as $$ select true; $$;
 Nothing else changes — no data migration, no client rewrite. Prices live in
 `unlock_cost()`.
 
+## Testing
+
+```bash
+pnpm test                          # every suite
+pnpm test credits                  # suites matching a name
+node scripts/test.mjs --verbose    # list passing tests too
+```
+
+Three suites — `harness`, `credits`, `codes` — over the two places where a
+silent bug costs somebody money or hands out a code they did not pay for.
+
+They run against the project database, because that is where the code under
+test lives: Postgres functions sitting on PostGIS and Supabase's auth schema,
+with no local Postgres and no container runtime on this machine. A mock of all
+that would only ever test the mock.
+
+So the isolation is real rather than promised. Every test runs inside a
+transaction that is **always** rolled back — on pass, on failure, and on
+process death, where the connection drops and Postgres does it for us. Tests
+never touch existing rows: they create their own users and places, and the
+places sit at Null Island so `submit_bathroom`'s 20m duplicate check cannot
+collide with anything real.
+
+That is the design. The enforcement is the canary that runs after every
+rollback. It counts rows carrying the test marker, and re-hashes every function
+body in `public` against the hash taken before the run. If either has moved,
+the run stops on that test rather than carrying on against a live map. Both
+paths have been checked by pointing them at things that do exist.
+
+The function-body half matters more than it looks: the `codes` suite re-enables
+the M4 body of `can_view_code()` inside its transaction, because a gate that is
+currently off (migration 013) is otherwise a reversible decision nobody ever
+exercises. One that leaked would put a paywall on every code on the map without
+anything visibly breaking.
+
+One thing deliberately not covered: two sessions racing the same balance.
+`unlock_code()` locks the buyer's profile row before reading it, but proving
+that needs a second session that can see the buyer — which needs a commit, and
+nothing here commits. The suite covers what the lock protects, not the race it
+protects against.
+
 ## Marker encoding
 
 Three orthogonal dimensions across three visual channels, because one icon per
