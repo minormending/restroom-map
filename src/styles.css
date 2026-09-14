@@ -1114,11 +1114,20 @@ button { font: inherit; color: inherit; }
 
 /* ---------- legal links ---------- */
 
-.legal-links {
+/* The footer positions; the nav inside it is only a nav. The version tag is
+   not site information and does not belong in a navigation landmark, so it
+   sits beside the nav rather than in it. */
+.page-foot {
   position: absolute;
   left: 0.75rem;
   bottom: 0.5rem;
   z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.legal-links {
   display: flex;
   gap: 0.75rem;
   font-size: 0.75rem;
@@ -1151,9 +1160,13 @@ button { font: inherit; color: inherit; }
 }
 .legal-links a:hover { color: var(--accent); border-color: var(--accent); opacity: 1; }
 
-/* The detail sheet covers the bottom-left on phones. */
+/* The detail sheet covers the bottom-left on phones.
+   This was written as `.sheet ~ .legal-links`, which could never match: `~`
+   selects a following sibling and the footer is rendered before the sheet, so
+   the rule has been dead since it was written. :has() asks the question the
+   right way round, and is already used for the same job elsewhere in here. */
 @media (max-width: 48rem) {
-  .sheet ~ .legal-links { display: none; }
+  .app:has(.sheet) .page-foot { display: none; }
 }
 
 /* On a phone the prompt is full-width and lands on the map's zoom buttons,
@@ -1183,7 +1196,7 @@ button { font: inherit; color: inherit; }
 .banners { right: 0.75rem; }
 
 /* Always clear the attribution strip, which is full-width on a phone. */
-.legal-links { bottom: 2.3rem; }
+.page-foot { bottom: 2.3rem; }
 
 @media (max-width: 30rem) {
   .top-bar { gap: 0.35rem; }

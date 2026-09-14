@@ -303,11 +303,13 @@ export default function App() {
         <Profile account={account} onClose={() => setProfileOpen(false)} />
       )}
 
-      <nav className="legal-links" aria-label="Site information">
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
+      <div className="page-foot">
+        <nav className="legal-links" aria-label="Site information">
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+        </nav>
         <BuildTag />
-      </nav>
+      </div>
 
       {adding && <div className="crosshair" aria-hidden="true" />}
 
