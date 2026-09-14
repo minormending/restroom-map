@@ -240,6 +240,23 @@ NYC lists two Columbus Park restrooms 120m apart and they are genuinely two
 buildings, so a radius wide enough to catch a carelessly placed pin is also
 wide enough to merge real ones.
 
+It reads four fields beyond name and location, and two of them do not fit a
+boolean:
+
+| Source field | Column | Note |
+| --- | --- | --- |
+| `accessibility` | `wheelchair` | `full` / `partial` / `none`. 49 rows citywide are partial |
+| `restroom_type` | `gender_neutral` | any all-gender option counts |
+| `changing_stations` | `changing_table` | `any` / `women_only` / `men_only` / `none` |
+| `operator` | `floor_hint` | written as "Operated by NYC Parks" |
+
+Flattening either enum is how somebody ends up outside a door they cannot use.
+"Partially accessible" rounded to yes wastes the trip a wheelchair user can
+least afford; "yes, in the women's restroom" rounded to yes sends a father with
+an infant to a table he cannot reach. The filters follow the same split —
+step-free excludes `partial`, changing table includes the gendered ones and the
+detail sheet says which.
+
 No dataset anywhere carries door codes. That part cannot be imported, which is
 both the bad news and the reason this project has a reason to exist.
 
