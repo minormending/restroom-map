@@ -1,24 +1,39 @@
 import type { Map as MapLibreMap } from 'maplibre-gl'
-import { VENUE_TYPES, type Fill, type VenueType } from '../lib/types'
+import { ACCESS_KINDS, VENUE_TYPES, type AccessKind, type VenueType } from '../lib/types'
 
 /**
  * Three visual channels, so the reader decodes a pin at a glance instead of
  * matching it against a legend:
- *   glyph -> venue type      fill -> access kind      badge -> trouble state
+ *   glyph -> venue type      hue -> access kind      badge -> trouble state
+ *
+ * Confirmation is a fourth thing, and it is deliberately NOT a hue. It used
+ * to be — an unconfirmed place went grey and its access kind stopped being
+ * visible at all — which meant a freshly imported map said nothing except
+ * "nobody has been here", the one moment it can least afford to. Confirmation
+ * is a treatment instead: filled when somebody has confirmed the place,
+ * hollow when nobody has. The hue is free to keep stating access either way.
  *
  * Pin colours are deliberately theme-independent. They sit on a basemap that
  * is light grey or near-black depending on the viewer, so each hue is picked
  * to hold contrast against both, and the disc behind the glyph stays white.
  */
-const FILL_COLORS: Record<Fill, string> = {
+const ACCESS_COLORS: Record<AccessKind, string> = {
   open: '#168A52',
   code_required: '#C8811A',
   ask_staff: '#2C6BD6',
   customers_only: '#8A4FBF',
-  unverified: '#94A0A9',
 }
 
-export const FILLS = Object.keys(FILL_COLORS) as Fill[]
+/**
+ * The body of a hollow pin. Pale enough to read as empty next to a filled
+ * one, with enough of the hue left to still name the access kind on its own.
+ */
+const ACCESS_TINTS: Record<AccessKind, string> = {
+  open: '#B4DCC7',
+  code_required: '#EBD0A5',
+  ask_staff: '#B6CEF3',
+  customers_only: '#D5BEEA',
+}
 
 /** Each glyph is drawn in an 11×11 box, translated under the pin head. */
 const GLYPHS: Record<VenueType, string> = {
@@ -53,15 +68,25 @@ const GLYPH_HOLES: Partial<Record<VenueType, string>> = {
 const PIN_BODY =
   'M16 1.6C8.6 1.6 2.6 7.6 2.6 15c0 9.7 13.4 26.8 13.4 26.8S29.4 24.7 29.4 15c0-7.4-6-13.4-13.4-13.4z'
 
-function pinSvg(venue: VenueType, fill: Fill): string {
-  const color = FILL_COLORS[fill]
+function pinSvg(venue: VenueType, access: AccessKind, confirmed: boolean): string {
+  const color = ACCESS_COLORS[access]
   const hole = GLYPH_HOLES[venue]
-  // An earlier version dashed the outline of unverified pins. At the size a
-  // pin actually renders on a phone that reads as a torn edge, not a style —
-  // and grey against four saturated hues already says "nobody has confirmed
-  // this". Solid outline for every pin.
+
+  // An earlier version dashed the outline of unconfirmed pins. At the size a
+  // pin actually renders on a phone that reads as a torn edge, not a style.
+  // A hollow body holds up at that size where a dash pattern does not.
+  //
+  // Both variants keep the same white halo — 0.8 either side of the edge —
+  // because that, not the fill, is what separates a pin from a basemap that
+  // might be light grey or might be near-black. The hollow one draws the hue
+  // over the inner half of that halo as a ring.
+  const body = confirmed
+    ? `<path d="${PIN_BODY}" fill="${color}" stroke="#FFFFFF" stroke-width="1.6"/>`
+    : `<path d="${PIN_BODY}" fill="${ACCESS_TINTS[access]}" stroke="#FFFFFF" stroke-width="3.2"/>` +
+      `<path d="${PIN_BODY}" fill="none" stroke="${color}" stroke-width="1.6"/>`
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="88" viewBox="0 0 32 44">
-<path d="${PIN_BODY}" fill="${color}" stroke="#FFFFFF" stroke-width="1.6"/>
+${body}
 <circle cx="16" cy="15" r="6.7" fill="#FFFFFF"/>
 <g transform="translate(11.6,10.6)"><path d="${GLYPHS[venue]}" fill="${color}"/>${
     hole ? `<path d="${hole}" fill="#FFFFFF"/>` : ''
@@ -83,10 +108,11 @@ function rasterise(svg: string, w: number, h: number): Promise<HTMLImageElement>
   })
 }
 
-export const pinIconId = (venue: VenueType, fill: Fill) => `pin-${venue}-${fill}`
+export const pinIconId = (venue: VenueType, access: AccessKind, confirmed: boolean) =>
+  `pin-${venue}-${access}-${confirmed ? 'confirmed' : 'hollow'}`
 export const BADGE_ICON_ID = 'badge-trouble'
 
-/** Registers all 51 images. Idempotent, so a style reload can call it again. */
+/** Registers all 81 images. Idempotent, so a style reload can call it again. */
 export async function registerIcons(map: MapLibreMap): Promise<void> {
   const jobs: Promise<void>[] = []
 
@@ -101,7 +127,11 @@ export async function registerIcons(map: MapLibreMap): Promise<void> {
   }
 
   for (const venue of VENUE_TYPES) {
-    for (const fill of FILLS) add(pinIconId(venue, fill), pinSvg(venue, fill), 64, 88)
+    for (const access of ACCESS_KINDS) {
+      for (const confirmed of [true, false]) {
+        add(pinIconId(venue, access, confirmed), pinSvg(venue, access, confirmed), 64, 88)
+      }
+    }
   }
   add(BADGE_ICON_ID, BADGE_SVG, 36, 36)
 
@@ -109,4 +139,4 @@ export async function registerIcons(map: MapLibreMap): Promise<void> {
 }
 
 /** Shared with the legend and detail sheet so one table drives every surface. */
-export const fillColor = (fill: Fill) => FILL_COLORS[fill]
+export const accessColor = (access: AccessKind) => ACCESS_COLORS[access]

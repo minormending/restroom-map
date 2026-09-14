@@ -9,9 +9,6 @@ export const ACCESS_KINDS = [
 ] as const
 export type AccessKind = (typeof ACCESS_KINDS)[number]
 
-/** The fill channel of the marker. `unverified` is derived, not stored. */
-export type Fill = AccessKind | 'unverified'
-
 export const VENUE_LABELS: Record<VenueType, string> = {
   store: 'Store',
   restaurant: 'Restaurant',
@@ -73,11 +70,20 @@ export interface Bounds {
 }
 
 /**
- * A bathroom nobody has confirmed reads grey and dashed regardless of how it
- * gets in. Confirmed ones take the colour of their access kind.
+ * Whether anybody has confirmed this place.
+ *
+ * This used to pick the marker colour: unconfirmed meant grey, whatever the
+ * access kind was. That overwrote one channel with another, and it did it
+ * most completely when the map was new — every row imported from NYC Open
+ * Data arrives with no confirmations, so the whole map read grey and the
+ * access legend described colours that appeared nowhere.
+ *
+ * Confirmation is now a treatment rather than a hue: access kind always sets
+ * the colour, and this decides whether the pin is filled or hollow. Both
+ * channels survive, and a place lights up when someone confirms it.
  */
-export function fillFor(b: Bathroom): Fill {
-  return b.confirms === 0 ? 'unverified' : b.access_kind
+export function isConfirmed(b: Bathroom): boolean {
+  return b.confirms > 0
 }
 
 export function isTroubled(b: Bathroom): boolean {

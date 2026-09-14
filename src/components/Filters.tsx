@@ -2,7 +2,7 @@ import {
   ACCESS_KINDS, ACCESS_LABELS, VENUE_LABELS, VENUE_TYPES,
   type AccessKind, type Filters, type VenueType,
 } from '../lib/types'
-import { fillColor } from '../map/icons'
+import { accessColor } from '../map/icons'
 
 interface Props {
   filters: Filters
@@ -40,11 +40,14 @@ export default function FiltersPanel({ filters, onChange, open, onToggle }: Prop
                   aria-pressed={filters.access.has(a)}
                   onClick={() => onChange({ ...filters, access: toggle(filters.access, a) })}
                 >
-                  <i className="swatch" style={{ background: fillColor(a) }} aria-hidden="true" />
+                  <i className="swatch" style={{ background: accessColor(a) }} aria-hidden="true" />
                   {ACCESS_LABELS[a]}
                 </button>
               ))}
             </div>
+            <p className="legend-note">
+              Hollow pins are places nobody has confirmed yet.
+            </p>
           </fieldset>
 
           <fieldset>

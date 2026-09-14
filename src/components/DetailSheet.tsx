@@ -6,8 +6,8 @@ import ReportBox from './ReportBox'
 import type { Account } from '../lib/auth'
 import { useState } from 'react'
 import { confidenceLine, describeDistance, metresBetween } from '../lib/format'
-import { ACCESS_LABELS, VENUE_LABELS, fillFor, type Bathroom } from '../lib/types'
-import { fillColor } from '../map/icons'
+import { ACCESS_LABELS, VENUE_LABELS, type Bathroom } from '../lib/types'
+import { accessColor } from '../map/icons'
 
 interface Props {
   bathroom: Bathroom
@@ -32,7 +32,7 @@ export default function DetailSheet({
   const [localCode, setLocalCode] = useState<string | null>(null)
   const merged = { ...bathroom, ...detail, ...(localCode ? { code: localCode } : {}) }
   const confidence = confidenceLine(merged.confirms, merged.troubles, merged.last_confirmed)
-  const accent = fillColor(fillFor(merged))
+  const accent = accessColor(merged.access_kind)
 
   const away = near ? describeDistance(metresBetween(near, [merged.lng, merged.lat])) : null
   // Universal Maps URL: resolves to the platform's own app on iOS and Android

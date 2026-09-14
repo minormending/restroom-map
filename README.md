@@ -167,18 +167,28 @@ protects against.
 
 ## Marker encoding
 
-Three orthogonal dimensions across three visual channels, because one icon per
-combination is unreadable at a glance and glance is the whole use case.
+Four dimensions across four visual channels, because one icon per combination
+is unreadable at a glance and glance is the whole use case.
 
 | Channel | Encodes |
 | --- | --- |
 | Glyph | Venue type — bag, tree, carriage, cup, building… |
-| Fill | Access — green open, amber code required, blue ask staff, violet customers only, grey unverified |
+| Hue | Access — green open, amber code required, blue ask staff, violet customers only |
+| Fill | Confirmation — solid once somebody has confirmed it, hollow until then |
 | Badge | Recent trouble reports outweighing confirmations |
 
 Pin colours are deliberately theme-independent: they sit on a basemap that is
 light or near-black depending on the viewer, so each hue holds contrast on both.
+Both fills keep the same white halo around the pin edge, because that — not the
+fill — is what separates a pin from either basemap.
 
+**Confirmation used to be a hue**: an unconfirmed place went grey and its access
+kind stopped being visible at all. That reads fine in a mature map and badly in
+a new one. Every row imported from NYC Open Data arrives with no confirmations,
+so all 84 places were grey, the access legend described four colours that
+appeared nowhere on the map, and the encoding said only "nobody has been here" —
+at the one moment it can least afford to say nothing else. Separating the two
+channels keeps both, and gives a place somewhere to go when it earns it.
 ## Deploying
 
 Pushing to `main` builds and publishes via `.github/workflows/deploy.yml`.

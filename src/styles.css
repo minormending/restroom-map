@@ -221,6 +221,13 @@ button { font: inherit; color: inherit; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 
+.legend-note {
+  margin: 0.45rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--ink-3);
+}
+
 .chip {
   display: inline-flex;
   align-items: center;

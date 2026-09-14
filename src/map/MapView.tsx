@@ -9,7 +9,7 @@ import {
 } from 'maplibre-gl'
 import type { FeatureCollection, Point as GeoPoint } from 'geojson'
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from '../lib/config'
-import { fillFor, isTroubled, type Bathroom } from '../lib/types'
+import { isConfirmed, isTroubled, type Bathroom } from '../lib/types'
 import { BADGE_ICON_ID, pinIconId, registerIcons } from './icons'
 
 const SOURCE = 'bathrooms'
@@ -35,7 +35,7 @@ function toGeoJSON(rows: Bathroom[]): FeatureCollection {
       properties: {
         id: b.id,
         // Precomputed so the style expressions stay trivial to read.
-        icon: pinIconId(b.venue_type, fillFor(b)),
+        icon: pinIconId(b.venue_type, b.access_kind, isConfirmed(b)),
         troubled: isTroubled(b),
       },
     })),
