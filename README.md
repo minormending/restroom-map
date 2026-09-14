@@ -265,6 +265,22 @@ both the bad news and the reason this project has a reason to exist.
   **Do not delete it, make it private, or switch its Pages off.** Google
   re-checks verification, and losing it can start refusing sign-ins with the
   cause three steps removed from the symptom.
+- **The sign-in page says `supabase.co`, not Restroom Map.** Google's consent
+  screen reads "to continue to zfxrhykegdilxssghmyf.supabase.co" and offers
+  that hostname's privacy policy. The links themselves are right — they resolve
+  to this project's privacy and terms pages, so the branding config did save —
+  but the name a user reads is a random-looking host.
+
+  On a page asking for a Google password, an unrecognisable hostname reads as
+  phishing. Some people will close the tab instead of finishing, and that is a
+  sign-up cost paid silently.
+
+  Check **App name** under Google Auth Platform → Branding first: Google falls
+  back to the callback host when it is blank. If it is set and the hostname
+  persists, this is just the shape of Supabase's hosted auth — the OAuth
+  callback lives on `supabase.co` and Google names whichever host receives the
+  redirect. Fixing that needs a Supabase custom domain, which is a paid
+  add-on, so it is a cost decision rather than a config one.
 - **Tile provider.** CARTO's public styles need no key and are fine at this
   scale, but read their terms before real traffic.
 - **Whether to seed from OpenStreetMap at all.** ODbL has share-alike
