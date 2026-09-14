@@ -1,6 +1,6 @@
 import {
-  ACCESS_KINDS, ACCESS_LABELS, VENUE_LABELS, VENUE_TYPES,
-  type AccessKind, type Filters, type VenueType,
+  ACCESS_KINDS, ACCESS_LABELS, NEED_LABELS, VENUE_LABELS, VENUE_TYPES,
+  type AccessKind, type Filters, type Need, type VenueType,
 } from '../lib/types'
 import { placesInView } from '../lib/format'
 import { accessColor } from '../map/icons'
@@ -17,16 +17,21 @@ interface Props {
 }
 
 /**
- * Migration 015 shipped only the changing-table filter and said so: wheelchair
- * and gender_neutral were null on every row, and a filter that can only ever
- * return nothing is worse than its absence. Importing the two fields NYC Open
- * Data was already sending makes both of them answerable.
+ * Grouped by the question being asked rather than listed flat. Ten chips in a
+ * row is a wall; "can I get in", "can I change", "can I manage" is how the
+ * person filtering already thinks about it.
+ *
+ * Most of these are unanswered on most places today. That is visible and it is
+ * meant to be — a need that returns nothing is the map admitting nobody has
+ * recorded it yet, which is a truer thing to show than a filter that quietly
+ * does not exist.
  */
-const NEEDS = [
-  ['needsStepFree', 'Step-free'],
-  ['needsChanging', 'Changing table'],
-  ['needsGenderNeutral', 'All-gender'],
-] as const
+const NEED_GROUPS: { legend: string; needs: readonly Need[] }[] = [
+  { legend: 'Getting in', needs: ['step_free', 'turning_space', 'grab_bars', 'unlocked'] },
+  { legend: 'Changing', needs: ['changing', 'adult_changing', 'hoist'] },
+  { legend: 'Managing', needs: ['sink_in_stall', 'shelf'] },
+  { legend: 'Who it is for', needs: ['gender_neutral'] },
+]
 
 function toggle<T>(set: Set<T>, value: T): Set<T> {
   const next = new Set(set)
@@ -36,8 +41,7 @@ function toggle<T>(set: Set<T>, value: T): Set<T> {
 }
 
 export default function FiltersPanel({ filters, onChange, open, onToggle, resultCount }: Props) {
-  const needs = [filters.needsChanging, filters.needsStepFree, filters.needsGenderNeutral]
-  const count = filters.venues.size + filters.access.size + needs.filter(Boolean).length
+  const count = filters.venues.size + filters.access.size + filters.needs.size
 
   return (
     <div className={`filters${open ? ' is-open' : ''}`}>
@@ -72,22 +76,24 @@ export default function FiltersPanel({ filters, onChange, open, onToggle, result
             </p>
           </fieldset>
 
-          <fieldset>
-            <legend>Needs</legend>
-            <div className="chips">
-              {NEEDS.map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  className={`chip${filters[key] ? ' is-on' : ''}`}
-                  aria-pressed={filters[key]}
-                  onClick={() => onChange({ ...filters, [key]: !filters[key] })}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </fieldset>
+          {NEED_GROUPS.map(({ legend, needs }) => (
+            <fieldset key={legend}>
+              <legend>{legend}</legend>
+              <div className="chips">
+                {needs.map((need) => (
+                  <button
+                    key={need}
+                    type="button"
+                    className={`chip${filters.needs.has(need) ? ' is-on' : ''}`}
+                    aria-pressed={filters.needs.has(need)}
+                    onClick={() => onChange({ ...filters, needs: toggle(filters.needs, need) })}
+                  >
+                    {NEED_LABELS[need]}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          ))}
 
           <fieldset>
             <legend>Place</legend>
@@ -112,8 +118,7 @@ export default function FiltersPanel({ filters, onChange, open, onToggle, result
               className="clear"
               onClick={() =>
                 onChange({
-                  ...filters, venues: new Set(), access: new Set(),
-                  needsChanging: false, needsStepFree: false, needsGenderNeutral: false,
+                  ...filters, venues: new Set(), access: new Set(), needs: new Set(),
                 })
               }
             >

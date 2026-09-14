@@ -1,23 +1,45 @@
 import { SEED_BATHROOMS } from '../data/seed'
 import { read as lastSeen, remember } from './lastSeen'
 import { supabase } from './supabase'
-import type { AccessKind, Bathroom, Bounds, Filters, VenueType } from './types'
+import type { AccessKind, Bathroom, Bounds, Filters, Need, VenueType } from './types'
 
 function withinBounds(b: Bathroom, v: Bounds): boolean {
   return b.lng >= v.minLng && b.lng <= v.maxLng && b.lat >= v.minLat && b.lat <= v.maxLat
 }
 
+/**
+ * One need, answered for one place. Mirrors the SQL in migration 018 clause
+ * for clause — this runs against bundled sample data and against the offline
+ * store, and a rule that differs between here and there would show up as pins
+ * that appear and disappear depending on the signal.
+ *
+ * Unknown is never a match. Somebody filtering on a need is saying the journey
+ * is wasted without it, and "we don't know" is not a reason to send them.
+ */
+function meetsNeed(b: Bathroom, need: Need): boolean {
+  switch (need) {
+    // A gendered changing table still counts as having one. The sheet says
+    // which, and hiding it from everybody helps nobody.
+    case 'changing': return b.changing_table != null && b.changing_table !== 'none'
+    // 'partial' does not satisfy step-free: a partly accessible restroom is
+    // exactly the trip a wheelchair user cannot afford to waste.
+    case 'step_free': return b.wheelchair === 'full'
+    case 'gender_neutral': return b.gender_neutral === true
+    case 'adult_changing': return b.adult_changing === 'changing_places' || b.adult_changing === 'bench'
+    case 'hoist': return b.adult_changing === 'changing_places'
+    case 'grab_bars': return b.grab_bars === true
+    case 'turning_space': return b.turning_space === true
+    case 'sink_in_stall': return b.sink_in_stall === true
+    case 'shelf': return b.shelf === true
+    // Known to be unlocked, not merely not known to be locked.
+    case 'unlocked': return b.accessible_locked === false
+  }
+}
+
 function matchesFilters(b: Bathroom, f: Filters): boolean {
   if (f.venues.size && !f.venues.has(b.venue_type)) return false
   if (f.access.size && !f.access.has(b.access_kind)) return false
-  // The bundled sample has no amenity data, so these can only ever exclude.
-  // A gendered changing table still counts as having one — the sheet says
-  // which, and hiding it from everyone helps nobody.
-  if (f.needsChanging && (b.changing_table == null || b.changing_table === 'none')) return false
-  // Partial is not a match. A partly step-free restroom is exactly the trip
-  // somebody in a wheelchair cannot afford to waste.
-  if (f.needsStepFree && b.wheelchair !== 'full') return false
-  if (f.needsGenderNeutral && b.gender_neutral !== true) return false
+  for (const need of f.needs) if (!meetsNeed(b, need)) return false
   return true
 }
 
@@ -79,9 +101,7 @@ export async function fetchInView(
       types: filters.venues.size ? ([...filters.venues] as VenueType[]) : null,
       access: filters.access.size ? ([...filters.access] as AccessKind[]) : null,
       max_results: maxResults,
-      needs_changing: filters.needsChanging,
-      needs_step_free: filters.needsStepFree,
-      needs_gender_neutral: filters.needsGenderNeutral,
+      needs: filters.needs.size ? [...filters.needs] : null,
     }))
   } catch (e) {
     // supabase-js lets a failed fetch through as a thrown TypeError rather
@@ -117,7 +137,7 @@ export async function fetchDetail(id: string): Promise<Partial<Bathroom>> {
   const [detail, code] = await Promise.all([
     supabase
       .from('bathrooms')
-      .select('address, floor_hint, operator, wheelchair, changing_table, gender_neutral')
+      .select('address, floor_hint, operator, wheelchair, changing_table, gender_neutral, adult_changing, grab_bars, turning_space, accessible_locked, sink_in_stall, shelf')
       .eq('id', id)
       .maybeSingle(),
     supabase.rpc('get_code', { p_bathroom_id: id }),

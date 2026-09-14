@@ -34,6 +34,36 @@ export type WheelchairAccess = (typeof WHEELCHAIR_ACCESS)[number]
 export const CHANGING_TABLE_ACCESS = ['any', 'women_only', 'men_only', 'none'] as const
 export type ChangingTableAccess = (typeof CHANGING_TABLE_ACCESS)[number]
 
+export const ADULT_CHANGING = ['changing_places', 'bench', 'none'] as const
+export type AdultChanging = (typeof ADULT_CHANGING)[number]
+
+/**
+ * The things somebody filters on when the trip is wasted without them.
+ *
+ * Kept as one list rather than a field per need: the viewport function takes
+ * them as an array for the same reason, and a need that exists in one place
+ * and not the other is a filter that silently does nothing.
+ */
+export const NEEDS = [
+  'step_free', 'turning_space', 'grab_bars', 'unlocked',
+  'changing', 'adult_changing', 'hoist',
+  'sink_in_stall', 'shelf', 'gender_neutral',
+] as const
+export type Need = (typeof NEEDS)[number]
+
+export const NEED_LABELS: Record<Need, string> = {
+  step_free: 'Step-free',
+  turning_space: 'Room to turn',
+  grab_bars: 'Grab bars',
+  unlocked: 'Not locked',
+  changing: 'Changing table',
+  adult_changing: 'Adult changing',
+  hoist: 'Hoist',
+  sink_in_stall: 'Sink in the cubicle',
+  shelf: 'Shelf',
+  gender_neutral: 'All-gender',
+}
+
 export const ACCESS_LABELS: Record<AccessKind, string> = {
   open: 'Open — no code',
   code_required: 'Code required',
@@ -61,6 +91,12 @@ export interface Bathroom {
   wheelchair?: WheelchairAccess | null
   changing_table?: ChangingTableAccess | null
   gender_neutral?: boolean | null
+  adult_changing?: AdultChanging | null
+  grab_bars?: boolean | null
+  turning_space?: boolean | null
+  accessible_locked?: boolean | null
+  sink_in_stall?: boolean | null
+  shelf?: boolean | null
   code?: string | null
   code_locked?: boolean
   code_cost?: number
@@ -73,9 +109,7 @@ export interface Filters {
   venues: Set<VenueType>
   access: Set<AccessKind>
   hideTroubled: boolean
-  needsChanging: boolean
-  needsStepFree: boolean
-  needsGenderNeutral: boolean
+  needs: Set<Need>
 }
 
 export interface Bounds {
