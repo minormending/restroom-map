@@ -160,9 +160,10 @@ for (const r of keep.slice(0, 5)) {
   // Show every field being written. A dry run is the only look anyone gets
   // at this data before it lands on the map.
   const say = (k, v) => `${k}=${v ?? '?'}`
-  console.log(`   - ${r.name.slice(0, 40).padEnd(40)} ${r.venue_type.padEnd(15)} ` +
+  console.log(`   - ${r.name.slice(0, 36).padEnd(36)} ${r.venue_type.padEnd(15)} ` +
     [say('step-free', r.wheelchair), say('changing', r.changing_table),
      say('all-gender', r.gender_neutral)].join('  '))
+  if (r.operator) console.log(`       operated by ${r.operator}`)
 }
 
 // Collisions against what is already there. submit_bathroom refuses a pin
@@ -240,9 +241,13 @@ try {
   let inserted = 0, updated = 0
   for (const r of toWrite) {
     const { rowCount } = await client.query(
+      // floor_hint is deliberately absent. NYC does not supply one, and it is
+      // the one field here a person might contribute later — overwriting that
+      // on every re-import would quietly delete the only part of an imported
+      // row that somebody actually walked to the place to write down.
       `insert into bathrooms
          (geog, name, venue_type, access_kind, changing_table, wheelchair,
-          gender_neutral, floor_hint, import_source, import_id, import_licence)
+          gender_neutral, operator, import_source, import_id, import_licence)
        values (st_setsrid(st_makepoint($1,$2),4326)::geography, $3, $4::venue_type,
                'open', $5::changing_table_access, $6::wheelchair_access,
                $7, $8, $9, $10, $11)
@@ -251,11 +256,11 @@ try {
                      venue_type = excluded.venue_type,
                      changing_table = excluded.changing_table,
                      wheelchair = excluded.wheelchair,
-                     gender_neutral = excluded.gender_neutral
+                     gender_neutral = excluded.gender_neutral,
+                     operator = excluded.operator
        returning (xmax = 0) as is_insert`,
       [r.lng, r.lat, r.name, r.venue_type, r.changing_table, r.wheelchair,
-       r.gender_neutral, r.operator ? `Operated by ${r.operator}` : null,
-       SOURCE, r.import_id, LICENCE])
+       r.gender_neutral, r.operator, SOURCE, r.import_id, LICENCE])
     if (rowCount) inserted++
   }
   await client.query('commit')
