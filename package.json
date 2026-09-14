@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build && cp dist/index.html dist/404.html",
     "lint": "oxlint",
+    "test": "node scripts/test.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "db:status": "node scripts/db.mjs status",
