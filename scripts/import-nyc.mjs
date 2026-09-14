@@ -142,6 +142,23 @@ for (const r of rows) {
     wheelchair: wheelchair(r.accessibility),
     gender_neutral: genderNeutral(r.restroom_type),
     operator: r.operator ?? null,
+    // Every row in this dataset is a facility inside something that has its
+    // own posted hours — a park, a library, a terminal. 'venue' says exactly
+    // that and nothing more.
+    //
+    // NOT 'daylight', which is the tempting answer and the wrong one. NYC
+    // publishes no hours for these: not in this dataset, not in Parks
+    // Properties, not anywhere in the open data catalogue. Marking them
+    // daylight would make "open now" start returning park restrooms on an
+    // assumption, and most NYC comfort stations are seasonal — a November
+    // evening would send somebody to a shed that shut in October.
+    //
+    // 'venue' never matches "open now", so this fills the field honestly
+    // without teaching the filter to guess. What it buys is the detail sheet
+    // saying "open while the venue is" instead of "nobody has recorded when
+    // it is open", which is the difference between no information and "go and
+    // look at the park's posted hours".
+    hours: 'venue',
   })
   stats.kept++
 }
@@ -247,20 +264,21 @@ try {
       // row that somebody actually walked to the place to write down.
       `insert into bathrooms
          (geog, name, venue_type, access_kind, changing_table, wheelchair,
-          gender_neutral, operator, import_source, import_id, import_licence)
+          gender_neutral, operator, hours, import_source, import_id, import_licence)
        values (st_setsrid(st_makepoint($1,$2),4326)::geography, $3, $4::venue_type,
                'open', $5::changing_table_access, $6::wheelchair_access,
-               $7, $8, $9, $10, $11)
+               $7, $8, $9::hours_kind, $10, $11, $12)
        on conflict (import_source, import_id) where import_source is not null
        do update set name = excluded.name,
                      venue_type = excluded.venue_type,
                      changing_table = excluded.changing_table,
                      wheelchair = excluded.wheelchair,
                      gender_neutral = excluded.gender_neutral,
-                     operator = excluded.operator
+                     operator = excluded.operator,
+                     hours = excluded.hours
        returning (xmax = 0) as is_insert`,
       [r.lng, r.lat, r.name, r.venue_type, r.changing_table, r.wheelchair,
-       r.gender_neutral, r.operator, SOURCE, r.import_id, LICENCE])
+       r.gender_neutral, r.operator, r.hours, SOURCE, r.import_id, LICENCE])
     if (rowCount) inserted++
   }
   await client.query('commit')
