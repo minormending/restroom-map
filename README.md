@@ -277,6 +277,9 @@ both the bad news and the reason this project has a reason to exist.
 - **Whether to seed from OpenStreetMap at all.** ODbL has share-alike
   provisions on derived databases; `bathrooms.osm_id` exists so imports stay
   separable, but decide before the first import, not after.
-- **The 30 seeded places are unverified.** Real locations, but nobody has
-  checked one in person. Consider deleting them in favour of a handful you have
-  actually stood in front of.
+- **Almost nothing on the map has been confirmed.** 84 active places — 60
+  imported from NYC Open Data, 24 hand-seeded — and exactly one carries a
+  confirmation. Real locations, but nobody has stood in front of most of them.
+  Since access kind and confirmation became separate channels the map shows
+  this honestly: it is nearly all hollow pins. Consider trading the seeds for
+  a handful you have actually checked.
