@@ -1,5 +1,7 @@
 # Restroom Map
 
+**→ [minormending.github.io/restroom-map](https://minormending.github.io/restroom-map/)**
+
 A crowdsourced map of public restrooms, built around the question the other
 maps do not answer: **will it work for me?**
 
