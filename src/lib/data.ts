@@ -13,6 +13,10 @@ function matchesFilters(b: Bathroom, f: Filters): boolean {
   // A gendered changing table still counts as having one — the sheet says
   // which, and hiding it from everyone helps nobody.
   if (f.needsChanging && (b.changing_table == null || b.changing_table === 'none')) return false
+  // Partial is not a match. A partly step-free restroom is exactly the trip
+  // somebody in a wheelchair cannot afford to waste.
+  if (f.needsStepFree && b.wheelchair !== 'full') return false
+  if (f.needsGenderNeutral && b.gender_neutral !== true) return false
   return true
 }
 
@@ -40,6 +44,8 @@ export async function fetchInView(
     access: filters.access.size ? ([...filters.access] as AccessKind[]) : null,
     max_results: maxResults,
     needs_changing: filters.needsChanging,
+    needs_step_free: filters.needsStepFree,
+    needs_gender_neutral: filters.needsGenderNeutral,
   })
 
   if (error) throw new Error(error.message)

@@ -16,6 +16,18 @@ interface Props {
   resultCount: number | null
 }
 
+/**
+ * Migration 015 shipped only the changing-table filter and said so: wheelchair
+ * and gender_neutral were null on every row, and a filter that can only ever
+ * return nothing is worse than its absence. Importing the two fields NYC Open
+ * Data was already sending makes both of them answerable.
+ */
+const NEEDS = [
+  ['needsStepFree', 'Step-free'],
+  ['needsChanging', 'Changing table'],
+  ['needsGenderNeutral', 'All-gender'],
+] as const
+
 function toggle<T>(set: Set<T>, value: T): Set<T> {
   const next = new Set(set)
   if (next.has(value)) next.delete(value)
@@ -24,7 +36,8 @@ function toggle<T>(set: Set<T>, value: T): Set<T> {
 }
 
 export default function FiltersPanel({ filters, onChange, open, onToggle, resultCount }: Props) {
-  const count = filters.venues.size + filters.access.size + (filters.needsChanging ? 1 : 0)
+  const needs = [filters.needsChanging, filters.needsStepFree, filters.needsGenderNeutral]
+  const count = filters.venues.size + filters.access.size + needs.filter(Boolean).length
 
   return (
     <div className={`filters${open ? ' is-open' : ''}`}>
@@ -62,14 +75,17 @@ export default function FiltersPanel({ filters, onChange, open, onToggle, result
           <fieldset>
             <legend>Needs</legend>
             <div className="chips">
-              <button
-                type="button"
-                className={`chip${filters.needsChanging ? ' is-on' : ''}`}
-                aria-pressed={filters.needsChanging}
-                onClick={() => onChange({ ...filters, needsChanging: !filters.needsChanging })}
-              >
-                Changing table
-              </button>
+              {NEEDS.map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`chip${filters[key] ? ' is-on' : ''}`}
+                  aria-pressed={filters[key]}
+                  onClick={() => onChange({ ...filters, [key]: !filters[key] })}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </fieldset>
 
@@ -95,7 +111,10 @@ export default function FiltersPanel({ filters, onChange, open, onToggle, result
               type="button"
               className="clear"
               onClick={() =>
-                onChange({ ...filters, venues: new Set(), access: new Set(), needsChanging: false })
+                onChange({
+                  ...filters, venues: new Set(), access: new Set(),
+                  needsChanging: false, needsStepFree: false, needsGenderNeutral: false,
+                })
               }
             >
               Clear filters

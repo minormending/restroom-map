@@ -30,7 +30,8 @@ export default function App() {
   const [bathrooms, setBathrooms] = useState<Bathroom[]>([])
   const [view, setView] = useState<Bounds | null>(null)
   const [filters, setFilters] = useState<Filters>({
-    venues: new Set(), access: new Set(), hideTroubled: false, needsChanging: false,
+    venues: new Set(), access: new Set(), hideTroubled: false,
+    needsChanging: false, needsStepFree: false, needsGenderNeutral: false,
   })
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)

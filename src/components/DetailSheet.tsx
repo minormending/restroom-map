@@ -37,8 +37,8 @@ const STEP_FREE: Record<WheelchairAccess, [AmenityState, string]> = {
 
 const CHANGING: Record<ChangingTableAccess, [AmenityState, string]> = {
   any:        ['yes',     'Changing table'],
-  women_only: ['partial', "Changing table \u2014 women's room only"],
-  men_only:   ['partial', 'Changing table \u2014 men\u2019s room only'],
+  women_only: ['partial', 'Changing table — women’s room only'],
+  men_only:   ['partial', 'Changing table — men’s room only'],
   none:       ['no',      'Changing table'],
 }
 

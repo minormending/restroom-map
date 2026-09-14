@@ -72,6 +72,8 @@ export interface Filters {
   access: Set<AccessKind>
   hideTroubled: boolean
   needsChanging: boolean
+  needsStepFree: boolean
+  needsGenderNeutral: boolean
 }
 
 export interface Bounds {
