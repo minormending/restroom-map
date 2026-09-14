@@ -254,24 +254,17 @@ both the bad news and the reason this project has a reason to exist.
   issue tracker, so it tells people not to post an email address there and to
   expect a follow-up question on the issue. It works, but a private address
   would work better, and swapping it is two links and a paragraph.
-- **Google's consent screen** is in Testing mode, which is worse than a user
-  cap: Google expires refresh tokens after seven days there, so anyone signed
-  in is silently logged out weekly. In an app where credits and unlocked codes
-  hang off the account, that reads as "it lost my stuff".
+- **Google sign-in depends on a second repo.** The consent screen is published
+  now. Getting there needed `minormending.github.io` registered as an
+  authorized domain, which Google only accepts for a domain verified in Search
+  Console, and that verification is a token served from the bare domain — which
+  was a 404, because project sites live under a path.
 
-  Sign-in asks only for `email` and `profile` — non-sensitive scopes — so
-  publishing needs no Google review and takes effect immediately. It needs two
-  things first. The privacy and terms URLs, which exist:
-  `https://minormending.github.io/restroom-map/{privacy,terms}.html`. And
-  `minormending.github.io` registered as an authorized domain, which Google
-  only accepts once the domain is verified in Search Console.
-
-  That verification needs a token served from the bare domain, which used to
-  be a 404 — project sites live under a path. The
-  [minormending.github.io](https://github.com/minormending/minormending.github.io)
-  repo now serves that root and marks where the token goes. **Do not delete
-  it**: Google re-checks verification, and losing it can start refusing
-  sign-ins with the cause three steps from the symptom.
+  The [minormending.github.io](https://github.com/minormending/minormending.github.io)
+  repo serves that root and holds the token in the `<head>` of its one page.
+  **Do not delete it, make it private, or switch its Pages off.** Google
+  re-checks verification, and losing it can start refusing sign-ins with the
+  cause three steps removed from the symptom.
 - **Tile provider.** CARTO's public styles need no key and are fine at this
   scale, but read their terms before real traffic.
 - **Whether to seed from OpenStreetMap at all.** ODbL has share-alike
