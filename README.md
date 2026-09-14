@@ -245,13 +245,18 @@ both the bad news and the reason this project has a reason to exist.
 
 ## Still to settle before this goes public
 
-- **Fill in the placeholders** in `public/privacy.html` and `public/terms.html`:
-  every `[contact address]` and `[jurisdiction]`. Both pages carry a visible
-  banner saying so, which is deliberate — it should be impossible to ship them
-  unnoticed. Both were drafted to describe this system accurately; that is not
-  the same as being legally sufficient, and neither has been reviewed.
+- **Neither legal page has been reviewed by a lawyer.** The placeholders are
+  filled — contact is the GitHub issue tracker, governing law is New York — but
+  both pages still carry a banner saying they were drafted to describe this
+  system accurately, which is not the same as being legally sufficient. That
+  banner is deliberate and should stay until someone qualified has read them.
+- **Deletion requests arrive in public.** The privacy page routes them to the
+  issue tracker, so it tells people not to post an email address there and to
+  expect a follow-up question on the issue. It works, but a private address
+  would work better, and swapping it is two links and a paragraph.
 - **Google's consent screen** is in Testing mode. Moving it to Production needs
-  the privacy policy URL — `https://<your site>/privacy.html`.
+  the privacy policy URL, which now exists:
+  `https://minormending.github.io/restroom-map/privacy.html`.
 - **Tile provider.** CARTO's public styles need no key and are fine at this
   scale, but read their terms before real traffic.
 - **Whether to seed from OpenStreetMap at all.** ODbL has share-alike
