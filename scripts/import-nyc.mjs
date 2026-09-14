@@ -38,13 +38,53 @@ const VENUE = {
   'Privately Owned Public Space': 'public_facility',
 }
 
-// "Yes, in women's restroom only" is still a changing table.
+const norm = (v) =>
+  v == null ? null : String(v).trim().toLowerCase().replace(/^"|"$/g, '')
+
+/**
+ * "Yes, in women's restroom only" is a changing table somebody cannot use.
+ * Flattening it to a plain yes sends a father with an infant to a table he
+ * cannot reach — the same wasted trip this importer already refuses to cause
+ * by skipping closed restrooms.
+ *
+ * "in single-stall all gender restroom only" is not a restriction on who may
+ * use it, only on where it is, so it maps to `any`.
+ */
 const changingTable = (v) => {
-  if (v == null) return null
-  const s = String(v).trim().toLowerCase().replace(/^"|"$/g, '')
-  if (s.startsWith('yes')) return true
-  if (s === 'no') return false
-  return null              // "N/A, restrooms closed" and friends
+  const s = norm(v)
+  if (s == null) return null
+  if (!s.startsWith('yes')) return s === 'no' ? 'none' : null
+  if (s.includes("women's")) return 'women_only'
+  if (s.includes("men's")) return 'men_only'
+  return 'any'
+}
+
+/**
+ * Partial accessibility is its own answer, not a rounding of yes or no. The
+ * column holds it because a wheelchair user cannot afford the trip that finds
+ * out which way it rounded.
+ */
+const wheelchair = (v) => {
+  const s = norm(v)
+  if (s == null) return null
+  if (s.startsWith('fully')) return 'full'
+  if (s.startsWith('partially') || s.startsWith('limited')) return 'partial'
+  if (s.startsWith('not')) return 'none'
+  return null
+}
+
+/**
+ * All-gender in any form counts, including "Both Single-Stall All Gender and
+ * Multi-Stall W/M" — the question is whether such a restroom is there at all.
+ * Note the source contains a "Single -Stall" typo, hence matching on the
+ * meaningful part rather than the whole string.
+ */
+const genderNeutral = (v) => {
+  const s = norm(v)
+  if (s == null) return null
+  if (s.includes('all gender')) return true
+  if (s.includes('w/m')) return false
+  return null
 }
 
 function loadEnv() {
@@ -99,6 +139,8 @@ for (const r of rows) {
     lat, lng,
     venue_type: VENUE[r.location_type] ?? 'other',
     changing_table: changingTable(r.changing_stations),
+    wheelchair: wheelchair(r.accessibility),
+    gender_neutral: genderNeutral(r.restroom_type),
     operator: r.operator ?? null,
   })
   stats.kept++
@@ -115,7 +157,12 @@ const byType = keep.reduce((a, r) => ((a[r.venue_type] = (a[r.venue_type] ?? 0) 
 console.log(`  by venue type      ${JSON.stringify(byType)}`)
 console.log('\n  first five:')
 for (const r of keep.slice(0, 5)) {
-  console.log(`   - ${r.name.slice(0, 44).padEnd(44)} ${r.venue_type.padEnd(16)} changing=${r.changing_table}`)
+  // Show every field being written. A dry run is the only look anyone gets
+  // at this data before it lands on the map.
+  const say = (k, v) => `${k}=${v ?? '?'}`
+  console.log(`   - ${r.name.slice(0, 40).padEnd(40)} ${r.venue_type.padEnd(15)} ` +
+    [say('step-free', r.wheelchair), say('changing', r.changing_table),
+     say('all-gender', r.gender_neutral)].join('  '))
 }
 
 // Collisions against what is already there. submit_bathroom refuses a pin
@@ -194,17 +241,21 @@ try {
   for (const r of toWrite) {
     const { rowCount } = await client.query(
       `insert into bathrooms
-         (geog, name, venue_type, access_kind, changing_table, floor_hint,
-          import_source, import_id, import_licence)
+         (geog, name, venue_type, access_kind, changing_table, wheelchair,
+          gender_neutral, floor_hint, import_source, import_id, import_licence)
        values (st_setsrid(st_makepoint($1,$2),4326)::geography, $3, $4::venue_type,
-               'open', $5, $6, $7, $8, $9)
+               'open', $5::changing_table_access, $6::wheelchair_access,
+               $7, $8, $9, $10, $11)
        on conflict (import_source, import_id) where import_source is not null
        do update set name = excluded.name,
                      venue_type = excluded.venue_type,
-                     changing_table = excluded.changing_table
+                     changing_table = excluded.changing_table,
+                     wheelchair = excluded.wheelchair,
+                     gender_neutral = excluded.gender_neutral
        returning (xmax = 0) as is_insert`,
-      [r.lng, r.lat, r.name, r.venue_type, r.changing_table,
-       r.operator ? `Operated by ${r.operator}` : null, SOURCE, r.import_id, LICENCE])
+      [r.lng, r.lat, r.name, r.venue_type, r.changing_table, r.wheelchair,
+       r.gender_neutral, r.operator ? `Operated by ${r.operator}` : null,
+       SOURCE, r.import_id, LICENCE])
     if (rowCount) inserted++
   }
   await client.query('commit')
