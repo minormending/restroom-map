@@ -100,6 +100,8 @@ export interface Bathroom {
   code?: string | null
   code_locked?: boolean
   code_cost?: number
+  /** What people have said but nobody has corroborated yet. Detail-only. */
+  claims?: AccessClaim[]
 }
 
 export const REPORT_KINDS = ['works', 'code_bad', 'gone', 'inaccessible', 'dirty'] as const
@@ -110,6 +112,18 @@ export interface Filters {
   access: Set<AccessKind>
   hideTroubled: boolean
   needs: Set<Need>
+}
+
+/**
+ * One unsettled answer. `claims` is how many people have said this exact
+ * thing; `disputed` means somebody has said something else about the same
+ * field. Settled fields never appear here — they are on the row itself.
+ */
+export interface AccessClaim {
+  field: string
+  value: string
+  claims: number
+  disputed: boolean
 }
 
 export interface Bounds {

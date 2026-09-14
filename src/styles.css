@@ -510,6 +510,49 @@ button { font: inherit; color: inherit; }
   margin-bottom: 0.15rem;
 }
 
+/* Claims that nobody has corroborated. Deliberately not styled as a fact:
+   it carries its own evidence, and a disputed one carries the disagreement. */
+.claimed { margin: 0.6rem 0 0; }
+.claimed-label,
+.answer .claimed-label {
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.3rem;
+}
+.claimed ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.3rem; }
+.claimed li {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--ink-2);
+  border-left: 3px solid var(--rule);
+  padding-left: 0.55rem;
+}
+.claimed li.is-disputed { border-left-color: var(--warn); }
+
+/* The form. One question per row, because somebody answering is standing in
+   a toilet with a phone in one hand. */
+.answer { margin: 0.7rem 0 0; }
+.answer-row { margin-bottom: 0.6rem; }
+.answer-q { display: block; font-size: 0.85rem; margin-bottom: 0.3rem; }
+.answer-options { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.answer-note { margin: 0.5rem 0 0; font-size: 0.78rem; color: var(--ink-3); }
+
+.link-btn {
+  display: inline;
+  background: none;
+  border: none;
+  padding: 0 0 0 0.3rem;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ---------- the nearby prompt ---------- */
 
 /* Bottom-centre, where a thumb already is, and clear of the attribution strip.

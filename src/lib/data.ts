@@ -1,7 +1,9 @@
 import { SEED_BATHROOMS } from '../data/seed'
 import { read as lastSeen, remember } from './lastSeen'
 import { supabase } from './supabase'
-import type { AccessKind, Bathroom, Bounds, Filters, Need, VenueType } from './types'
+import type {
+  AccessClaim, AccessKind, Bathroom, Bounds, Filters, Need, VenueType,
+} from './types'
 
 function withinBounds(b: Bathroom, v: Bounds): boolean {
   return b.lng >= v.minLng && b.lng <= v.maxLng && b.lat >= v.minLat && b.lat <= v.maxLat
@@ -134,13 +136,19 @@ export async function fetchDetail(id: string): Promise<Partial<Bathroom>> {
     return row ?? {}
   }
 
-  const [detail, code] = await Promise.all([
+  const [detail, code, claims] = await Promise.all([
     supabase
       .from('bathrooms')
       .select('address, floor_hint, operator, wheelchair, changing_table, gender_neutral, adult_changing, grab_bars, turning_space, accessible_locked, sink_in_stall, shelf')
       .eq('id', id)
       .maybeSingle(),
     supabase.rpc('get_code', { p_bathroom_id: id }),
+    // What people have claimed and nobody has corroborated. A reader needs to
+    // be able to tell one account from a settled fact.
+    supabase
+      .from('access_claim_state')
+      .select('field, value, claims, disputed')
+      .eq('bathroom_id', id),
   ])
 
   if (detail.error) throw new Error(detail.error.message)
@@ -152,6 +160,7 @@ export async function fetchDetail(id: string): Promise<Partial<Bathroom>> {
 
   return {
     ...(detail.data ?? {}),
+    claims: (claims.error ? [] : claims.data ?? []) as AccessClaim[],
     code: codeRow?.code ?? null,
     code_locked: codeRow?.locked ?? false,
     code_cost: codeRow?.cost,
