@@ -610,6 +610,58 @@ button { font: inherit; color: inherit; }
 }
 .view-toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 
+/* The intro and the detail sheet take focus programmatically, so a screen
+   reader announces them when they open. Neither is a tab stop — both are
+   tabindex="-1" — so nobody ever navigates to them by keyboard, and the global
+   focus ring around a whole panel reads as "selected" rather than "you are
+   here". Their focusable children keep their own indicators. */
+.intro:focus-visible,
+.sheet:focus-visible { outline: none; }
+
+/* ---------- the intro ---------- */
+
+/* Bottom-anchored like the nearby prompt, and for the same reason: it is
+   within thumb reach and it leaves the map and its controls alone. Somebody
+   opening this may be in a hurry in a way most software never has to think
+   about, so it does not cover the screen and it leaves on one tap. */
+.intro {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 4.2rem;
+  z-index: 12;
+  width: min(27rem, calc(100vw - 1.5rem));
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1rem 1rem;
+}
+
+.intro-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.intro p { margin: 0 0 0.6rem; font-size: 0.9rem; line-height: 1.45; }
+.intro-note { color: var(--ink-3); font-size: 0.84rem !important; }
+.intro-go { width: 100%; margin-top: 0.2rem; }
+
+.what-is-this {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.2rem 0.45rem;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.what-is-this:hover { color: var(--accent); border-color: var(--accent); }
+
 /* ---------- the nearby prompt ---------- */
 
 /* Bottom-centre, where a thumb already is, and clear of the attribution strip.

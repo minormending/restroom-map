@@ -6,6 +6,7 @@ import DetailSheet from './components/DetailSheet'
 import NearbyPrompt from './components/NearbyPrompt'
 import PlaceList from './components/PlaceList'
 import BuildTag from './components/BuildTag'
+import Intro, { introSeen } from './components/Intro'
 import Profile from './components/Profile'
 import FiltersPanel from './components/Filters'
 import SearchBar from './components/SearchBar'
@@ -62,6 +63,7 @@ export default function App() {
   // Map or list. Not a preference so much as an access route: the map is a
   // canvas, and a canvas has nothing in it for a screen reader.
   const [asList, setAsList] = useState(false)
+  const [intro, setIntro] = useState(() => !introSeen())
 
   const requestId = useRef(0)
 
@@ -308,6 +310,9 @@ export default function App() {
           <a href="privacy.html">Privacy</a>
           <a href="terms.html">Terms</a>
         </nav>
+        <button type="button" className="what-is-this" onClick={() => setIntro(true)}>
+          What is this?
+        </button>
         <BuildTag />
       </div>
 
@@ -327,7 +332,7 @@ export default function App() {
         />
       )}
 
-      {standingAt && !selected && !adding && !profileOpen && (
+      {standingAt && !intro && !selected && !adding && !profileOpen && (
         <NearbyPrompt
           bathroom={standingAt}
           near={userLocation}
@@ -335,6 +340,8 @@ export default function App() {
           onDismiss={(id) => setWaved((w) => new Set(w).add(id))}
         />
       )}
+
+      {intro && <Intro onDismiss={() => setIntro(false)} />}
 
       {selected && !adding && !profileOpen && (
         <DetailSheet
