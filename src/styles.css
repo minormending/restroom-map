@@ -1123,6 +1123,23 @@ button { font: inherit; color: inherit; }
   gap: 0.75rem;
   font-size: 0.75rem;
 }
+/* Same size and weight as the legal links beside it — it is reference
+   information, not a control anybody should be drawn to. It earns its place
+   by being readable out loud when a page looks wrong. */
+.build-tag {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.2rem 0.45rem;
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.build-tag:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+.build-tag:disabled { cursor: default; opacity: 0.7; }
+
 .legal-links a {
   color: var(--ink-3);
   text-decoration: none;

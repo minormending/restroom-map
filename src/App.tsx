@@ -5,6 +5,7 @@ import AuthButton from './components/AuthButton'
 import DetailSheet from './components/DetailSheet'
 import NearbyPrompt from './components/NearbyPrompt'
 import PlaceList from './components/PlaceList'
+import BuildTag from './components/BuildTag'
 import Profile from './components/Profile'
 import FiltersPanel from './components/Filters'
 import SearchBar from './components/SearchBar'
@@ -305,6 +306,7 @@ export default function App() {
       <nav className="legal-links" aria-label="Site information">
         <a href="privacy.html">Privacy</a>
         <a href="terms.html">Terms</a>
+        <BuildTag />
       </nav>
 
       {adding && <div className="crosshair" aria-hidden="true" />}
