@@ -165,6 +165,29 @@ that needs a second session that can see the buyer — which needs a commit, and
 nothing here commits. The suite covers what the lock protects, not the race it
 protects against.
 
+## Offline
+
+The service worker precaches the bundle and caches map tiles, so with no signal
+the app opens and the streets draw. The pins were the one thing that still
+needed a round trip, which made the worst case a working map of no bathrooms —
+in a basement, on a platform, inside a building with one bar, which is where
+this gets opened.
+
+Rows the map has shown are kept in `localStorage` (`restroom-map/last-seen/v1`,
+capped at 600). A failed query falls back to them, filtered through the same
+bounds and filter helpers the bundled-seed path uses, and a banner says so.
+
+The fallback is for **no signal**, not for a server error. Old pins beat no
+pins when the problem is the tunnel you are standing in. When the server
+answered and the answer was an error, walking outside will not help, and
+painting familiar pins over an outage would erase the only sign that anything
+is wrong. PostgREST failures carry an error code; a connection that never
+completed does not.
+
+Nothing expires on a timer. A restroom that existed last week almost certainly
+still exists — what matters is that the reader is told which they are looking
+at, not that the data is young.
+
 ## Marker encoding
 
 Four dimensions across four visual channels, because one icon per combination
@@ -304,7 +327,10 @@ both the bad news and the reason this project has a reason to exist.
   redirect. Fixing that needs a Supabase custom domain, which is a paid
   add-on, so it is a cost decision rather than a config one.
 - **Tile provider.** CARTO's public styles need no key and are fine at this
-  scale, but read their terms before real traffic.
+  scale, but read their terms before real traffic. Worth knowing that offline
+  behaviour leans on them: tiles come back from the service worker's cache, so
+  a first-ever visit with no signal draws pins on blank grey rather than on
+  streets.
 - **Whether to seed from OpenStreetMap at all.** ODbL has share-alike
   provisions on derived databases; `bathrooms.osm_id` exists so imports stay
   separable, but decide before the first import, not after.
