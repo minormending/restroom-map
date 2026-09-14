@@ -248,7 +248,12 @@ boolean:
 | `accessibility` | `wheelchair` | `full` / `partial` / `none`. 49 rows citywide are partial |
 | `restroom_type` | `gender_neutral` | any all-gender option counts |
 | `changing_stations` | `changing_table` | `any` / `women_only` / `men_only` / `none` |
-| `operator` | `floor_hint` | written as "Operated by NYC Parks" |
+| `operator` | `operator` | NYC Parks, NYPL, BPL — provenance, and a trust signal |
+
+`floor_hint` is deliberately not written by the importer. NYC supplies no such
+hint, and it is the one field on an imported row somebody might later walk to
+the place to fill in — so writing it every run would quietly delete the only
+contributed thing those rows can hold.
 
 Flattening either enum is how somebody ends up outside a door they cannot use.
 "Partially accessible" rounded to yes wastes the trip a wheelchair user can
