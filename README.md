@@ -305,62 +305,79 @@ both the bad news and the reason this project has a reason to exist.
 
 ## Still to settle before this goes public
 
+Ordered by what actually stops a launch, not by how much work each is.
+
 - **Neither legal page has been reviewed by a lawyer.** The placeholders are
-  filled — contact is the GitHub issue tracker, governing law is New York — but
-  both pages still carry a banner saying they were drafted to describe this
-  system accurately, which is not the same as being legally sufficient. That
-  banner is deliberate and should stay until someone qualified has read them.
+  filled — contact is the GitHub issue tracker, governing law is New York — and
+  both pages still carry a banner saying they describe this system accurately,
+  which is not the same as being legally sufficient. That banner is deliberate
+  and should stay until somebody qualified has read them. This is the only item
+  here that is a hard no.
+
+- **The map cannot yet answer the question it now asks.** The front page
+  promises to say whether a restroom will work for you. Today: 84 places, and
+  **zero** of them record an adult changing bench, grab bars, turning space,
+  whether the accessible stall is locked, a sink in the cubicle or a shelf.
+  Zero claims, one account, one confirmation.
+
+  That gap is the reason the project exists — nobody else records this — but a
+  promise with nothing behind it is worse than no promise. It wants a dozen
+  places filled in before anybody is invited.
+
+  **Bootstrapping needs two people, not one.** A claim is shown as fact only
+  once two people independently agree, which is the right rule and makes the
+  cold start harder than it looks: the first person to record a hoist sees
+  their answer sit as "on one person's word" until somebody else visits the
+  same restroom. Walk the first dozen with somebody else, not alone.
+
+- **Nobody disabled has used this.** The structural blocker is gone — until
+  recently every pin lived on a canvas and the accessibility tree held no
+  places at all, so a screen reader user could filter and be handed nothing.
+  There is a list view now, it is keyboard reachable, the sheet takes focus and
+  announces itself, and the automated suite passes.
+
+  None of that is the same as somebody actually using it. Structure was
+  verified; experience was not. For a project positioned on disability, one
+  real session before launch protects more than it costs.
+
+- **The sign-in screen says `supabase.co`, not Restroom Map.** Google's consent
+  screen reads "to continue to zfxrhykegdilxssghmyf.supabase.co". The privacy
+  and terms links on it are correct, so the branding config saved — it is the
+  name a person reads that is wrong, and on a page asking for a Google password
+  an unrecognisable hostname reads as phishing.
+
+  This costs more than it used to. Contributing requires an account, so this
+  screen now stands between the project and the only mechanism by which it gets
+  data. Check **App name** under Google Auth Platform → Branding first; Google
+  falls back to the callback host when it is blank. If it is set, this is the
+  shape of Supabase's hosted auth and the fix is a paid custom domain — a cost
+  decision rather than a configuration one.
+
+- **Correcting a settled fact has no design.** Claims are fill-only: once a
+  field is settled, further claims are refused. A hoist that gets removed, or
+  an import that was wrong, stays until somebody edits the database by hand.
+  Fine while the map is small and a real problem before it is not.
+
 - **Deletion requests arrive in public.** The privacy page routes them to the
-  issue tracker, so it tells people not to post an email address there and to
-  expect a follow-up question on the issue. It works, but a private address
-  would work better, and swapping it is two links and a paragraph.
-- **Google sign-in depends on a second repo.** The consent screen is published
-  now. Getting there needed `minormending.github.io` registered as an
-  authorized domain, which Google only accepts for a domain verified in Search
-  Console, and that verification is a token served from the bare domain — which
-  was a 404, because project sites live under a path.
+  issue tracker, tells people not to post an email address there, and warns
+  that identifying the account happens on the issue. It works. A private
+  address would work better, and swapping it is two links and a paragraph.
 
-  The [minormending.github.io](https://github.com/minormending/minormending.github.io)
-  repo serves that root and holds the token in the `<head>` of its one page.
-  **Do not delete it, make it private, or switch its Pages off.** Google
-  re-checks verification, and losing it can start refusing sign-ins with the
-  cause three steps removed from the symptom.
-- **The sign-in page says `supabase.co`, not Restroom Map.** Google's consent
-  screen reads "to continue to zfxrhykegdilxssghmyf.supabase.co" and offers
-  that hostname's privacy policy. The links themselves are right — they resolve
-  to this project's privacy and terms pages, so the branding config did save —
-  but the name a user reads is a random-looking host.
+- **Google sign-in depends on a second repo.**
+  [minormending.github.io](https://github.com/minormending/minormending.github.io)
+  serves the bare domain and holds the Search Console token in the `<head>` of
+  its one page. **Do not delete it, make it private, or switch its Pages off.**
+  Google re-checks verification, and losing it can start refusing sign-ins with
+  the cause three steps removed from the symptom.
 
-  On a page asking for a Google password, an unrecognisable hostname reads as
-  phishing. Some people will close the tab instead of finishing, and that is a
-  sign-up cost paid silently.
-
-  Check **App name** under Google Auth Platform → Branding first: Google falls
-  back to the callback host when it is blank. If it is set and the hostname
-  persists, this is just the shape of Supabase's hosted auth — the OAuth
-  callback lives on `supabase.co` and Google names whichever host receives the
-  redirect. Fixing that needs a Supabase custom domain, which is a paid
-  add-on, so it is a cost decision rather than a config one.
 - **Tile provider.** CARTO's public styles need no key and are fine at this
-  scale, but read their terms before real traffic. Worth knowing that offline
-  behaviour leans on them: tiles come back from the service worker's cache, so
-  a first-ever visit with no signal draws pins on blank grey rather than on
-  streets.
+  scale, but read their terms before real traffic. Offline behaviour leans on
+  them: tiles come back from the service worker cache, so a first-ever visit
+  with no signal draws pins on blank grey rather than on streets.
+
 - **Whether to seed from OpenStreetMap at all.** ODbL has share-alike
   provisions on derived databases. Imports stay separable — every imported row
   records `import_source`, `import_id` and `import_licence`, so withdrawing one
   source is a single delete, and the licence travels with the rows it governs
-  rather than living in someone's memory. Decide before the first import, not
+  rather than living in somebody's memory. Decide before the first import, not
   after.
-- **Almost nothing on the map has been confirmed.** 84 active places — 60
-  imported from NYC Open Data, 24 hand-seeded — and exactly one carries a
-  confirmation. Real locations, but nobody has stood in front of most of them.
-  Since access kind and confirmation became separate channels the map shows
-  this honestly: it is nearly all hollow pins.
-
-  The app now asks: stand within 60m of a place with a fix better than 40m and
-  it offers to take a confirmation, which lands geo-verified because it carries
-  coordinates. Whether that is enough is the open question — it only fires for
-  somebody who is already there, so it cannot manufacture the first few. Those
-  still have to be walked to. Consider trading the seeds for a handful you have
-  actually checked.
