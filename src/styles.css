@@ -397,6 +397,11 @@ button { font: inherit; color: inherit; }
 
 .sheet-addr { margin: 0; font-size: 0.87rem; color: var(--ink-3); }
 
+/* Sits with the address because it answers the same question — whose building
+   is this — rather than under "Finding it", where the importer used to leave
+   it and where it read as directions. */
+.sheet-operator { margin: 0.1rem 0 0; font-size: 0.82rem; color: var(--ink-3); }
+
 .confidence {
   margin: 0;
   font-size: 0.9rem;

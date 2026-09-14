@@ -96,6 +96,7 @@ export default function DetailSheet({
         </span>
         <h2>{merged.name}</h2>
         {merged.address && <p className="sheet-addr">{merged.address}</p>}
+        {merged.operator && <p className="sheet-operator">Operated by {merged.operator}</p>}
         <p className="sheet-go">
           {away && <span className="distance">{away}</span>}
           <a className="directions" href={directions} target="_blank" rel="noreferrer noopener">

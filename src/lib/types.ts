@@ -56,6 +56,8 @@ export interface Bathroom {
   // Detail-only fields, absent from the viewport payload.
   address?: string | null
   floor_hint?: string | null
+  /** Who runs the place. Provenance, not a location hint — see migration 017. */
+  operator?: string | null
   wheelchair?: WheelchairAccess | null
   changing_table?: ChangingTableAccess | null
   gender_neutral?: boolean | null
