@@ -29,7 +29,7 @@ export default function ReportBox({ bathroom, near, onReported }: Props) {
 
   if (done) {
     return (
-      <div className="report is-done">
+      <div className="report is-done" role="status" aria-live="polite">
         <span className="report-q">
           {duplicate
             ? 'You already reported this one today.'

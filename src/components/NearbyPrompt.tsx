@@ -30,7 +30,7 @@ export default function NearbyPrompt({ bathroom, near, onReported, onDismiss }: 
   if (done) return null
 
   return (
-    <aside className="nearby" aria-label={`Report on ${bathroom.name}`}>
+    <aside className="nearby" aria-label={`Report on ${bathroom.name}`} role="status" aria-live="polite">
       <p className="nearby-q">
         You seem to be at <strong>{bathroom.name}</strong>. Does the bathroom work?
       </p>

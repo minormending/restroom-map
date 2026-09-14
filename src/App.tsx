@@ -4,6 +4,7 @@ import AddPlace from './components/AddPlace'
 import AuthButton from './components/AuthButton'
 import DetailSheet from './components/DetailSheet'
 import NearbyPrompt from './components/NearbyPrompt'
+import PlaceList from './components/PlaceList'
 import Profile from './components/Profile'
 import FiltersPanel from './components/Filters'
 import SearchBar from './components/SearchBar'
@@ -57,6 +58,9 @@ export default function App() {
   const [waved, setWaved] = useState<Set<string>>(() => new Set())
   // These pins came from the local store, not the network.
   const [stale, setStale] = useState(false)
+  // Map or list. Not a preference so much as an access route: the map is a
+  // canvas, and a canvas has nothing in it for a screen reader.
+  const [asList, setAsList] = useState(false)
 
   const requestId = useRef(0)
 
@@ -219,6 +223,14 @@ export default function App() {
           near={userLocation ?? FALLBACK_CENTER}
           onPick={(p) => setFlyTo({ center: [p.lng, p.lat], zoom: 15.5, nonce: Date.now() })}
         />
+        <button
+          type="button"
+          className="view-toggle"
+          aria-pressed={asList}
+          onClick={() => setAsList((v) => !v)}
+        >
+          {asList ? 'Map' : 'List'}
+        </button>
         <FiltersPanel
           filters={filters}
           onChange={setFilters}
@@ -238,7 +250,17 @@ export default function App() {
         />
       </div>
 
-      <div className={filtersOpen ? 'banners is-filtering' : 'banners'}>
+      {/* Everything this app says about state lives here — the place count,
+          the location hint, errors, and whether the pins are from the network
+          or the offline store. Without a live region a screen reader announces
+          none of it: the count changes as you pan and filter, and the reader
+          is never told. Polite rather than assertive, because none of it
+          should interrupt. */}
+      <div
+        className={`banners${filtersOpen ? ' is-filtering' : ''}${asList ? ' is-listing' : ''}`}
+        role="status"
+        aria-live="polite"
+      >
         {USING_SEED_DATA && (
           <p className="banner banner-info">
             Running on bundled sample data for {FALLBACK_LABEL} — unverified, and no door
@@ -260,6 +282,10 @@ export default function App() {
           <p className="banner banner-count">{placesInView(bathrooms.length)}</p>
         )}
       </div>
+
+      {asList && (
+        <PlaceList bathrooms={bathrooms} near={userLocation} onSelect={setSelectedId} />
+      )}
 
       <MapView
         bathrooms={bathrooms}

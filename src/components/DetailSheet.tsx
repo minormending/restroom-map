@@ -5,7 +5,7 @@ import Comments from './Comments'
 import FlagLink from './FlagLink'
 import ReportBox from './ReportBox'
 import type { Account } from '../lib/auth'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { confidenceLine, describeDistance, metresBetween } from '../lib/format'
 import { ACCESS_LABELS, VENUE_LABELS, type Bathroom } from '../lib/types'
 import { accessColor } from '../map/icons'
@@ -24,6 +24,24 @@ interface Props {
 export default function DetailSheet({
   bathroom, detail, loading, near, account, onClose, onReported, onSpent,
 }: Props) {
+  const sheet = useRef<HTMLElement>(null)
+
+  /**
+   * Move focus into the sheet when it opens.
+   *
+   * Without this the sheet appears and focus stays wherever it was — on the
+   * map, or on the Filters button. A sighted user sees a panel slide in; a
+   * screen reader user is told nothing at all, and has to go looking for
+   * something they have no reason to believe exists.
+   *
+   * Focus goes to the container rather than the close button: landing on
+   * "Close details" as the first thing you hear is a strange way to be shown
+   * a place. The container is labelled, so it announces the name.
+   */
+  useEffect(() => {
+    sheet.current?.focus({ preventScroll: true })
+  }, [bathroom.id])
+
   const [localCode, setLocalCode] = useState<string | null>(null)
   const merged = { ...bathroom, ...detail, ...(localCode ? { code: localCode } : {}) }
   const confidence = confidenceLine(merged.confirms, merged.troubles, merged.last_confirmed)
@@ -36,7 +54,12 @@ export default function DetailSheet({
     `https://www.google.com/maps/dir/?api=1&destination=${merged.lat},${merged.lng}`
 
   return (
-    <aside className="sheet" aria-label={`Details for ${merged.name}`}>
+    <aside
+      className="sheet"
+      aria-label={`Details for ${merged.name}`}
+      ref={sheet}
+      tabIndex={-1}
+    >
       <button type="button" className="sheet-close" onClick={onClose} aria-label="Close details">
         ×
       </button>
