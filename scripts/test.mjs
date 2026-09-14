@@ -33,8 +33,7 @@
 import { readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import pg from 'pg'
-import { ROOT, dbConfig, withClient } from './lib/connect.mjs'
+import { ROOT, withClient } from './lib/connect.mjs'
 import { suites, AssertionError, raises } from './lib/testkit.mjs'
 
 const TESTS = join(ROOT, 'scripts', 'tests')
@@ -236,33 +235,50 @@ function context(client, state) {
     },
 
     /**
-     * A second database session, for the things one connection cannot show —
-     * chiefly whether a lock is actually taken. Its transaction is rolled back
-     * too, so the two sessions never see each other's rows: use it to prove
-     * blocking, not to prove a committed outcome.
+     * Run fn as a database role rather than as a user. Needed for anything
+     * that is enforced by a grant or an RLS policy: the migration role
+     * bypasses both, so a policy test that does not switch roles passes
+     * whether or not the policy exists.
      */
-    async secondSession(fn) {
-      const other = new pg.Client(dbConfig({ applicationName: 'restroom-map/test (2nd session)' }))
-      await other.connect()
+    async asRole(role, fn) {
+      const allowed = ['anon', 'authenticated', 'service_role']
+      if (!allowed.includes(role)) throw new Error(`unknown role: ${role}`)
+
+      await client.query(`set local role ${role}`)
+      let result, failure
       try {
-        await other.query('begin')
-        try {
-          return await fn(other)
-        } finally {
-          await other.query('rollback').catch(() => {})
-        }
-      } finally {
-        await other.end()
+        result = await fn()
+      } catch (err) {
+        failure = err
       }
+      await client.query('reset role').catch(() => {})
+      if (failure) throw failure
+      return result
     },
+
   }
   return t
 }
 
 // --- the runner ------------------------------------------------------------
 
-/** Nothing a test wrote may outlive its rollback. */
-async function canary(client) {
+/**
+ * Every function body in `public`, as one hash. A gating test replaces
+ * can_view_code() inside its transaction; if that ever outlived the
+ * rollback it would put a paywall on every code on the live map, silently.
+ * Comparing against the hash taken before the run catches it whichever way
+ * the gate happens to be set today.
+ */
+async function schemaFingerprint(client) {
+  const { rows } = await client.query(`
+    select md5(string_agg(pg_get_functiondef(p.oid), '|' order by p.oid)) as hash
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'`)
+  return rows[0].hash
+}
+
+/** Nothing a test wrote or replaced may outlive its rollback. */
+async function canary(client, baseline) {
   const { rows } = await client.query(
     `select (select count(*) from auth.users where email like $1)     as users,
             (select count(*) from bathrooms where name like $2)       as places,
@@ -275,8 +291,14 @@ async function canary(client) {
       `test data survived a rollback: ${leaked.map(([k, n]) => `${n} ${k}`).join(', ')}\n` +
       `The run is stopping here. Something committed that should not have.`)
   }
-}
 
+  if (await schemaFingerprint(client) !== baseline) {
+    throw new Error(
+      'a function definition survived a rollback.\n' +
+      'The run is stopping here — check can_view_code() and unlock_cost() '  +
+      'against supabase/migrations before doing anything else.')
+  }
+}
 async function main(client) {
   for (const file of readdirSync(TESTS).filter((f) => f.endsWith('.test.mjs')).sort()) {
     await import(pathToFileURL(join(TESTS, file)).href)
@@ -291,6 +313,8 @@ async function main(client) {
     console.error(`available: ${suites.map((s) => s.name).join(', ')}`)
     process.exit(1)
   }
+
+  const baseline = await schemaFingerprint(client)
 
   let passed = 0
   const failures = []
@@ -314,7 +338,7 @@ async function main(client) {
       }
 
       // Before reporting anything, prove the rollback did its job.
-      await canary(client)
+      await canary(client, baseline)
 
       if (error) {
         failures.push({ suite: s.name, test: test.name, error })
