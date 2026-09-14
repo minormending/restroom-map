@@ -10,6 +10,10 @@ export function relativeDays(iso: string | null): string | null {
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
+/** How many places the current view and filters leave. Said the same way
+ *  wherever it appears, which is now two places. */
+export const placesInView = (n: number): string => `${plural(n, 'place')} in view`
+
 /**
  * The sentence that makes a rotating-code database usable instead of harmful.
  * Freshness first, because a stale confirmation is worth less than a new one.

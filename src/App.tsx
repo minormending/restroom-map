@@ -12,6 +12,7 @@ import {
 import { currentAccount, onAccountChange, type Account } from './lib/auth'
 import { fetchBalance } from './lib/credits'
 import { fetchDetail, fetchInView } from './lib/data'
+import { placesInView } from './lib/format'
 import type { Bathroom, Bounds, Filters } from './lib/types'
 import MapView from './map/MapView'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -195,9 +196,7 @@ export default function App() {
           <p className="banner">Nothing mapped in this view yet.</p>
         )}
         {!error && bathrooms.length > 0 && (
-          <p className="banner banner-count">
-            {bathrooms.length} {bathrooms.length === 1 ? 'place' : 'places'} in view
-          </p>
+          <p className="banner banner-count">{placesInView(bathrooms.length)}</p>
         )}
       </div>
 
