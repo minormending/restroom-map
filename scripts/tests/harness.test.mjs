@@ -46,6 +46,20 @@ suite('harness', (test) => {
     eq(again, a, 'the same caller keeps their fingerprint')
   })
 
+  test('an expected failure does not poison the rest of the test', async (t) => {
+    const owner = await t.newUser()
+    const place = await t.place({ owner })
+
+    await t.raises(() => t.report(owner, place, 'works'), '42501',
+      'reporting your own place is refused')
+
+    // The point of the savepoint. Without one, every statement from here on
+    // comes back 25P02 and the test fails for a reason that has nothing to
+    // do with what it was checking.
+    eq(await t.balance(owner), 5, 'the session still works afterwards')
+    ok(await t.one('select 1 as n'), 'and still answers queries')
+  })
+
   test('writes leave nothing behind', async (t) => {
     // Everything this test creates carries the marker the canary hunts for.
     // The assertion is not in here — it is the canary that runs after the

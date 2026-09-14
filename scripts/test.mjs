@@ -35,7 +35,7 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import pg from 'pg'
 import { ROOT, dbConfig, withClient } from './lib/connect.mjs'
-import { suites, AssertionError } from './lib/testkit.mjs'
+import { suites, AssertionError, raises } from './lib/testkit.mjs'
 
 const TESTS = join(ROOT, 'scripts', 'tests')
 
@@ -102,11 +102,22 @@ function context(client, state) {
     async as(who, fn) {
       const previous = state.current
       await t.become(who)
+
+      let result, failure
       try {
-        return await fn()
-      } finally {
-        await t.become(previous)
+        result = await fn()
+      } catch (err) {
+        failure = err
       }
+
+      // Switching back must never mask what fn threw. When fn raises, the
+      // transaction is aborted and every later statement — including this
+      // restore — fails with 25P02, so a plain finally would report the
+      // aborted-transaction error instead of the refusal being tested.
+      await t.become(previous).catch(() => {})
+
+      if (failure) throw failure
+      return result
     },
 
     async become(who) {
@@ -205,6 +216,23 @@ function context(client, state) {
                        where user_id = p_user and bathroom_id = p_bathroom)
           );
         $fn$`)
+    },
+
+    /**
+     * Assert a call fails, and fails for the reason meant.
+     *
+     * The savepoint is not a nicety: in Postgres a raised error aborts the
+     * whole transaction, so without one the first expected failure in a
+     * test takes every statement after it down with a 25P02 that hides what
+     * the test was actually checking.
+     */
+    async raises(fn, errcode, what) {
+      await client.query('savepoint expected_failure')
+      try {
+        return await raises(fn, errcode, what)
+      } finally {
+        await client.query('rollback to savepoint expected_failure').catch(() => {})
+      }
     },
 
     /**
