@@ -332,8 +332,11 @@ both the bad news and the reason this project has a reason to exist.
   a first-ever visit with no signal draws pins on blank grey rather than on
   streets.
 - **Whether to seed from OpenStreetMap at all.** ODbL has share-alike
-  provisions on derived databases; `bathrooms.osm_id` exists so imports stay
-  separable, but decide before the first import, not after.
+  provisions on derived databases. Imports stay separable — every imported row
+  records `import_source`, `import_id` and `import_licence`, so withdrawing one
+  source is a single delete, and the licence travels with the rows it governs
+  rather than living in someone's memory. Decide before the first import, not
+  after.
 - **Almost nothing on the map has been confirmed.** 84 active places — 60
   imported from NYC Open Data, 24 hand-seeded — and exactly one carries a
   confirmation. Real locations, but nobody has stood in front of most of them.
