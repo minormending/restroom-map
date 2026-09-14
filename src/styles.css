@@ -485,6 +485,58 @@ button { font: inherit; color: inherit; }
    most worth stopping on, so they get the one mark that is neither. */
 .amenities .partial .amenity-mark { background: var(--warn); color: #fff; }
 
+/* ---------- the nearby prompt ---------- */
+
+/* Bottom-centre, where a thumb already is, and clear of the attribution strip.
+   It is the only thing in the app that interrupts, so it sits in front of the
+   map rather than in the banner stack, which is where dismissible notices go. */
+.nearby {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  /* Clear of .legal-links, which sit at 2.3rem and are about 1.5rem tall. On a
+     phone this card is full-width, so "they do not overlap horizontally" is
+     not a defence. */
+  bottom: 4.2rem;
+  z-index: 11;
+  width: min(26rem, calc(100vw - 1.5rem));
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 0.8rem 0.9rem;
+}
+
+.nearby-q {
+  margin: 0 0 0.6rem;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.nearby-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.nearby-actions .report-btn { flex: 1 1 auto; }
+
+.nearby-dismiss {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  padding: 0.5rem 0.4rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.nearby-dismiss:hover { color: var(--ink-2); }
+
 .sheet-foot {
   margin: 0;
   padding-top: 0.4rem;
@@ -959,6 +1011,18 @@ button { font: inherit; color: inherit; }
 /* The detail sheet covers the bottom-left on phones. */
 @media (max-width: 48rem) {
   .sheet ~ .legal-links { display: none; }
+}
+
+/* On a phone the prompt is full-width and lands on the map's zoom buttons,
+   leaving a half-covered control, which reads as breakage. Get them out of the
+   way while it is up — the same thing the detail sheet does to the legal links
+   just above. Pinch-zoom is unaffected, and the prompt is one tap from gone.
+
+   :has() is doing real work here: the card is not a sibling of the map's
+   controls and cannot reach them any other way. Where it is unsupported the
+   controls simply stay put, which is what happens today. */
+@media (max-width: 30rem) {
+  .app:has(.nearby) .maplibregl-ctrl-bottom-right { display: none; }
 }
 
 .flag-intro {

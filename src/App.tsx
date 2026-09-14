@@ -3,6 +3,7 @@ import type { MapLibreMap } from 'maplibre-gl'
 import AddPlace from './components/AddPlace'
 import AuthButton from './components/AuthButton'
 import DetailSheet from './components/DetailSheet'
+import NearbyPrompt from './components/NearbyPrompt'
 import Profile from './components/Profile'
 import FiltersPanel from './components/Filters'
 import SearchBar from './components/SearchBar'
@@ -12,6 +13,7 @@ import {
 import { currentAccount, onAccountChange, type Account } from './lib/auth'
 import { fetchBalance } from './lib/credits'
 import { fetchDetail, fetchInView } from './lib/data'
+import { placeYouAreAt, type Fix } from './lib/nearby'
 import { placesInView } from './lib/format'
 import type { Bathroom, Bounds, Filters } from './lib/types'
 import MapView from './map/MapView'
@@ -49,8 +51,18 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [balance, setBalance] = useState<number | null>(null)
   const [mapCenter, setMapCenter] = useState<[number, number]>(FALLBACK_CENTER)
+  // The fix that decides whether to ask about a nearby place. Separate from
+  // userLocation, which only has to be good enough to centre the map.
+  const [fix, setFix] = useState<Fix | null>(null)
+  const [waved, setWaved] = useState<Set<string>>(() => new Set())
 
   const requestId = useRef(0)
+
+  // Nothing to confirm on bundled data, and nothing to ask while a sheet or a
+  // form is already in front of the person.
+  const standingAt = USING_SEED_DATA
+    ? null
+    : placeYouAreAt(fix, bathrooms.filter((b) => !waved.has(b.id)))
 
   useEffect(() => {
     void currentAccount().then(setAccount)
@@ -85,6 +97,7 @@ export default function App() {
       const [lat, lng] = (at ?? '').split(',').map(Number)
       if (Number.isFinite(lat) && Number.isFinite(lng)) {
         setUserLocation([lng, lat])
+        setFix({ at: [lng, lat], accuracy: 5 })
         setFlyTo({ center: [lng, lat], zoom: 16.5, nonce: Date.now() })
         setLocStatus('ok')
         return
@@ -97,6 +110,7 @@ export default function App() {
       ({ coords }) => {
         const coarse = coords.accuracy > ACCURACY_LIMIT_M
         setUserLocation([coords.longitude, coords.latitude])
+        setFix({ at: [coords.longitude, coords.latitude], accuracy: coords.accuracy })
         setFlyTo({
           center: [coords.longitude, coords.latitude],
           zoom: coarse ? 12 : 15.5,
@@ -107,6 +121,32 @@ export default function App() {
       () => setLocStatus('denied'),
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 },
     )
+  }, [])
+
+  /**
+   * Take a fresh fix when the tab comes back to the front.
+   *
+   * The whole point of the nearby prompt is to catch somebody standing at a
+   * place, and the most likely way to arrive there is to look the place up,
+   * walk to it, and come back to the app — by which time the fix taken on load
+   * is from wherever the walk started. This does not move the map or touch
+   * locStatus; it only updates the position the prompt reasons about, and it
+   * asks for a cheap cached fix rather than powering up the GPS every time the
+   * tab is touched.
+   */
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      if (!navigator.geolocation) return
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) =>
+          setFix({ at: [coords.longitude, coords.latitude], accuracy: coords.accuracy }),
+        () => {},
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 30_000 },
+      )
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   const onViewChange = useCallback((map: MapLibreMap) => {
@@ -235,6 +275,15 @@ export default function App() {
             setView((v) => (v ? { ...v } : v))
             setSelectedId(id)
           }}
+        />
+      )}
+
+      {standingAt && !selected && !adding && !profileOpen && (
+        <NearbyPrompt
+          bathroom={standingAt}
+          near={userLocation}
+          onReported={onReported}
+          onDismiss={(id) => setWaved((w) => new Set(w).add(id))}
         />
       )}
 
