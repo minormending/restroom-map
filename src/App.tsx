@@ -13,8 +13,9 @@ import {
 import { currentAccount, onAccountChange, type Account } from './lib/auth'
 import { fetchBalance } from './lib/credits'
 import { fetchDetail, fetchInView } from './lib/data'
+import { rememberedAt } from './lib/lastSeen'
 import { placeYouAreAt, type Fix } from './lib/nearby'
-import { placesInView } from './lib/format'
+import { placesInView, relativeDays } from './lib/format'
 import type { Bathroom, Bounds, Filters } from './lib/types'
 import MapView from './map/MapView'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -55,8 +56,15 @@ export default function App() {
   // userLocation, which only has to be good enough to centre the map.
   const [fix, setFix] = useState<Fix | null>(null)
   const [waved, setWaved] = useState<Set<string>>(() => new Set())
+  // These pins came from the local store, not the network.
+  const [stale, setStale] = useState(false)
 
   const requestId = useRef(0)
+
+  // Recomputed on render rather than stored: it is only read while the stale
+  // banner is up, and a timestamp cached in state would itself go stale.
+  const savedAt = stale ? rememberedAt() : null
+  const savedWhen = savedAt ? relativeDays(new Date(savedAt).toISOString()) : null
 
   // Nothing to confirm on bundled data, and nothing to ask while a sheet or a
   // form is already in front of the person.
@@ -166,9 +174,15 @@ export default function App() {
     const id = ++requestId.current
     const t = setTimeout(() => {
       fetchInView(view, filters)
-        .then((rows) => { if (id === requestId.current) { setBathrooms(rows); setError(null) } })
+        .then(({ rows, stale: fromStore }) => {
+          if (id !== requestId.current) return
+          setBathrooms(rows)
+          setStale(fromStore)
+          setError(null)
+        })
         .catch((e: unknown) => {
           if (id !== requestId.current) return
+          setStale(false)
           setError(e instanceof Error ? e.message : 'Could not load this area')
         })
     }, 250)
@@ -234,6 +248,12 @@ export default function App() {
         )}
         {hint && <p className="banner">{hint}</p>}
         {error && <p className="banner banner-error">{error}</p>}
+        {stale && (
+          <p className="banner banner-stale">
+            No connection — showing places saved from your last visit
+            {savedWhen ? `, ${savedWhen}` : ''}.
+          </p>
+        )}
         {!error && view && bathrooms.length === 0 && (
           <p className="banner">Nothing mapped in this view yet.</p>
         )}

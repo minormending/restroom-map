@@ -1,4 +1,5 @@
 import { SEED_BATHROOMS } from '../data/seed'
+import { read as lastSeen, remember } from './lastSeen'
 import { supabase } from './supabase'
 import type { AccessKind, Bathroom, Bounds, Filters, VenueType } from './types'
 
@@ -20,36 +21,90 @@ function matchesFilters(b: Bathroom, f: Filters): boolean {
   return true
 }
 
+export interface InView {
+  rows: Bathroom[]
+  /** True when these came from the local store because the network did not. */
+  stale: boolean
+}
+
+/**
+ * Whether a failure is the network rather than the server.
+ *
+ * The distinction decides whether stale pins are a kindness or a cover-up. No
+ * signal is the case this cache exists for, and showing what we have with a
+ * banner is strictly better than an empty map. A server that answered with an
+ * error is a different thing: walking outside will not fix it, and quietly
+ * painting old pins over an outage or a bug would hide the one signal anybody
+ * has that something is wrong.
+ *
+ * PostgREST failures arrive with a code; a connection that never completed
+ * does not.
+ */
+function looksLikeNoSignal(error: { code?: string } | null, thrown?: unknown): boolean {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return true
+  if (thrown instanceof TypeError) return true          // fetch could not complete
+  return Boolean(error && !error.code)
+}
+
 /**
  * One indexed bbox query with the filters applied in the same pass. Against
- * seed data the same shape runs in memory, so the calling code is identical.
+ * seed data the same shape runs in memory, so the calling code is identical —
+ * and so does the offline fallback, which is the reason those two helpers are
+ * worth keeping rather than pushing entirely into SQL.
  */
 export async function fetchInView(
   view: Bounds,
   filters: Filters,
   maxResults = 300,
-): Promise<Bathroom[]> {
+): Promise<InView> {
   if (!supabase) {
-    return SEED_BATHROOMS
-      .filter((b) => withinBounds(b, view) && matchesFilters(b, filters))
-      .slice(0, maxResults)
+    return {
+      rows: SEED_BATHROOMS
+        .filter((b) => withinBounds(b, view) && matchesFilters(b, filters))
+        .slice(0, maxResults),
+      stale: false,
+    }
   }
 
-  const { data, error } = await supabase.rpc('bathrooms_in_view', {
-    min_lng: view.minLng,
-    min_lat: view.minLat,
-    max_lng: view.maxLng,
-    max_lat: view.maxLat,
-    types: filters.venues.size ? ([...filters.venues] as VenueType[]) : null,
-    access: filters.access.size ? ([...filters.access] as AccessKind[]) : null,
-    max_results: maxResults,
-    needs_changing: filters.needsChanging,
-    needs_step_free: filters.needsStepFree,
-    needs_gender_neutral: filters.needsGenderNeutral,
-  })
+  let data: unknown = null
+  let error: { code?: string; message: string } | null = null
+  let thrown: unknown = null
 
-  if (error) throw new Error(error.message)
-  return (data ?? []) as Bathroom[]
+  try {
+    ({ data, error } = await supabase.rpc('bathrooms_in_view', {
+      min_lng: view.minLng,
+      min_lat: view.minLat,
+      max_lng: view.maxLng,
+      max_lat: view.maxLat,
+      types: filters.venues.size ? ([...filters.venues] as VenueType[]) : null,
+      access: filters.access.size ? ([...filters.access] as AccessKind[]) : null,
+      max_results: maxResults,
+      needs_changing: filters.needsChanging,
+      needs_step_free: filters.needsStepFree,
+      needs_gender_neutral: filters.needsGenderNeutral,
+    }))
+  } catch (e) {
+    // supabase-js lets a failed fetch through as a thrown TypeError rather
+    // than an error object, and that is precisely the offline case.
+    thrown = e
+  }
+
+  if (error || thrown) {
+    // Nothing kept for this viewport is the same as being offline with an
+    // empty store: there is nothing better to show, so say what went wrong.
+    const kept = looksLikeNoSignal(error, thrown)
+      ? lastSeen()
+          .filter((b) => withinBounds(b, view) && matchesFilters(b, filters))
+          .slice(0, maxResults)
+      : []
+
+    if (kept.length > 0) return { rows: kept, stale: true }
+    throw new Error(error?.message ?? 'Could not load this area')
+  }
+
+  const rows = (data ?? []) as Bathroom[]
+  remember(rows)
+  return { rows, stale: false }
 }
 
 /** Detail-sheet payload. The code comes from `get_code`, which owns the gate. */

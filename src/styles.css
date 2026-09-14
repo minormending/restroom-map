@@ -485,6 +485,13 @@ button { font: inherit; color: inherit; }
    most worth stopping on, so they get the one mark that is neither. */
 .amenities .partial .amenity-mark { background: var(--warn); color: #fff; }
 
+/* Old pins are still useful pins, but the reader has to know which they are.
+   Warn rather than error: nothing is broken, the data is just from before. */
+.banner-stale {
+  border-left: 3px solid var(--warn);
+  color: var(--ink-2);
+}
+
 /* ---------- the nearby prompt ---------- */
 
 /* Bottom-centre, where a thumb already is, and clear of the attribution strip.
