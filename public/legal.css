@@ -1,5 +1,5 @@
 :root {
-  --ground:#EDF0F2; --surface:#FFF; --ink:#1A2027; --ink-2:#57646E; --ink-3:#7C8892;
+  --ground:#EDF0F2; --surface:#FFF; --ink:#1A2027; --ink-2:#57646E; --ink-3:#69747E;
   --rule:#D5DCE1; --accent:#1F4E9C; --accent-soft:#E1EAF7; --warn-bg:#FCF3E3; --warn-ink:#7A5310;
 }
 @media (prefers-color-scheme: dark) {

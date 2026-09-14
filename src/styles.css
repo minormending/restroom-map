@@ -6,7 +6,9 @@
   --surface-alt: #F5F7F8;
   --ink:         #1A2027;
   --ink-2:       #57646E;
-  --ink-3:       #7C8892;
+  /* 4.77:1 on white; #7C8892 was 3.62, under the 4.5 AA asks of body
+     text. It carries the secondary line on every result. */
+  --ink-3:       #69747E;
   --rule:        #D5DCE1;
   --rule-soft:   #E4E9EC;
   --accent:      #1F4E9C;
