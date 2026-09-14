@@ -34,6 +34,10 @@ strong { color: var(--ink); font-weight: 600; }
 .todo {
   background: var(--accent-soft); color: var(--accent);
   border-radius: 6px; padding: .15rem .45rem; font-weight: 600;
+  /* The right padding pushes a following full stop clear of the chip, so
+     "the laws of [jurisdiction] ." reads as a stray period. Pull the next
+     character back over the padding without letting it touch the tint. */
+  margin-right: -.4rem;
   font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: .85em;
 }
 footer a { display: inline-block; padding: .3rem 0; }

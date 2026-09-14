@@ -182,7 +182,7 @@ export default function App() {
         />
       </div>
 
-      <div className="banners">
+      <div className={filtersOpen ? 'banners is-filtering' : 'banners'}>
         {USING_SEED_DATA && (
           <p className="banner banner-info">
             Running on bundled sample data for {FALLBACK_LABEL} — unverified, and no door

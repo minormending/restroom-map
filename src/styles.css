@@ -256,6 +256,12 @@ button { font: inherit; color: inherit; }
 
 /* ---------- banners ---------- */
 
+/* The filter panel opens over this corner and is wide enough to cut a banner
+   in half, which reads as broken text rather than as one thing in front of
+   another. Hide them while it is open — except the count, which is the
+   feedback for filtering itself and is narrow enough to clear the panel. */
+.banners.is-filtering .banner:not(.banner-count) { display: none; }
+
 .banners {
   position: absolute;
   top: 3.6rem;
