@@ -38,3 +38,39 @@ export function rememberReport(bathroomId: string, kind: ReportKind): void {
     // Nothing to do — the server still enforces the real limit.
   }
 }
+
+/**
+ * Prompts waved away. Separate from reports on purpose: "not now" is not an
+ * answer about the place, it is an answer about being asked, and it should
+ * expire far sooner than a report does.
+ */
+const DISMISSED_KEY = 'restroom-map/not-now/v1'
+const DISMISSED_TTL = 6 * 3_600_000
+
+function readDismissed(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as Record<string, number>
+    const now = Date.now()
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([, at]) => now - at < DISMISSED_TTL),
+    )
+  } catch {
+    return {}
+  }
+}
+
+export function wasDismissed(bathroomId: string): boolean {
+  return bathroomId in readDismissed()
+}
+
+export function dismissNearby(bathroomId: string): void {
+  try {
+    const store = readDismissed()
+    store[bathroomId] = Date.now()
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify(store))
+  } catch {
+    // A prompt that reappears is a smaller problem than a crash here.
+  }
+}
