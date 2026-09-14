@@ -35,6 +35,16 @@ function meetsNeed(b: Bathroom, need: Need): boolean {
     case 'shelf': return b.shelf === true
     // Known to be unlocked, not merely not known to be locked.
     case 'unlocked': return b.accessible_locked === false
+    // Mirrors the SQL: only what can be computed. 'venue' means the café's
+    // hours decide and this map does not know them.
+    case 'open_now': {
+      if (b.hours === 'always') return true
+      if (b.hours !== 'daylight') return false
+      const h = Number(new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York', hour: 'numeric', hour12: false,
+      }).format(new Date()))
+      return h >= 7 && h <= 19
+    }
   }
 }
 
@@ -139,7 +149,7 @@ export async function fetchDetail(id: string): Promise<Partial<Bathroom>> {
   const [detail, code, claims] = await Promise.all([
     supabase
       .from('bathrooms')
-      .select('address, floor_hint, operator, wheelchair, changing_table, gender_neutral, adult_changing, grab_bars, turning_space, accessible_locked, sink_in_stall, shelf')
+      .select('address, floor_hint, operator, wheelchair, changing_table, gender_neutral, adult_changing, grab_bars, turning_space, accessible_locked, sink_in_stall, shelf, hours')
       .eq('id', id)
       .maybeSingle(),
     supabase.rpc('get_code', { p_bathroom_id: id }),

@@ -1,4 +1,6 @@
-import type { AdultChanging, Bathroom, ChangingTableAccess, WheelchairAccess } from './types'
+import type {
+  AdultChanging, Bathroom, ChangingTableAccess, HoursKind, WheelchairAccess,
+} from './types'
 
 /**
  * One registry for the nine accessibility facts: what each is called, and how
@@ -12,6 +14,7 @@ import type { AdultChanging, Bathroom, ChangingTableAccess, WheelchairAccess } f
 export const ACCESS_FIELDS = [
   'wheelchair', 'accessible_locked', 'turning_space', 'grab_bars',
   'changing_table', 'adult_changing', 'sink_in_stall', 'shelf', 'gender_neutral',
+  'hours',
 ] as const
 export type AccessField = (typeof ACCESS_FIELDS)[number]
 
@@ -28,6 +31,7 @@ export const FIELD_QUESTIONS: Record<AccessField, string> = {
   sink_in_stall: 'Is the sink inside the cubicle?',
   shelf: 'Is there a shelf?',
   gender_neutral: 'Is there an all-gender restroom?',
+  hours: 'When is it open?',
 }
 
 /** The short name, for lists and for naming a gap. */
@@ -41,6 +45,7 @@ export const FIELD_NAMES: Record<AccessField, string> = {
   sink_in_stall: 'a sink inside the cubicle',
   shelf: 'a shelf',
   gender_neutral: 'an all-gender restroom',
+  hours: 'when it is open',
 }
 
 /** The answers a person can give, in the order they should be offered. */
@@ -65,6 +70,13 @@ export const FIELD_OPTIONS: Record<AccessField, { value: string; label: string }
     { value: 'true', label: 'Locked' },
     { value: 'false', label: 'Not locked' },
   ],
+  // Three answers, because a real schedule never corroborates: two people
+  // describing the same hours as free text would never give the same string.
+  hours: [
+    { value: 'always', label: 'Always open' },
+    { value: 'daylight', label: 'Daylight only' },
+    { value: 'venue', label: "While the venue's open" },
+  ],
   turning_space: YES_NO(),
   grab_bars: YES_NO(),
   sink_in_stall: YES_NO(),
@@ -87,6 +99,14 @@ const CHANGING: Record<ChangingTableAccess, [FactState, string]> = {
   women_only: ['partial', 'Changing table — women’s room only'],
   men_only: ['partial', 'Changing table — men’s room only'],
   none: ['no', 'Changing table'],
+}
+
+const HOURS: Record<HoursKind, [FactState, string]> = {
+  always:   ['yes', 'Open around the clock'],
+  daylight: ['partial', 'Open in daylight hours'],
+  // Not a lesser answer — a different kind of one. The venue's hours decide,
+  // and this map does not know them, which is why "open now" never matches it.
+  venue:    ['partial', "Open while the venue is"],
 }
 
 const ADULT: Record<AdultChanging, [FactState, string]> = {
@@ -124,6 +144,7 @@ export function describe(field: AccessField, value: string | null | undefined): 
     case 'wheelchair': return STEP_FREE[value as WheelchairAccess]
     case 'changing_table': return CHANGING[value as ChangingTableAccess]
     case 'adult_changing': return ADULT[value as AdultChanging]
+    case 'hours': return HOURS[value as HoursKind]
     // The one field whose bad answer matters more than its good one: an
     // accessible stall you cannot get into is the journey this app exists to
     // stop somebody making.

@@ -34,6 +34,9 @@ export type WheelchairAccess = (typeof WHEELCHAIR_ACCESS)[number]
 export const CHANGING_TABLE_ACCESS = ['any', 'women_only', 'men_only', 'none'] as const
 export type ChangingTableAccess = (typeof CHANGING_TABLE_ACCESS)[number]
 
+export const HOURS_KIND = ['always', 'daylight', 'venue'] as const
+export type HoursKind = (typeof HOURS_KIND)[number]
+
 export const ADULT_CHANGING = ['changing_places', 'bench', 'none'] as const
 export type AdultChanging = (typeof ADULT_CHANGING)[number]
 
@@ -48,6 +51,7 @@ export const NEEDS = [
   'step_free', 'turning_space', 'grab_bars', 'unlocked',
   'changing', 'adult_changing', 'hoist',
   'sink_in_stall', 'shelf', 'gender_neutral',
+  'open_now',
 ] as const
 export type Need = (typeof NEEDS)[number]
 
@@ -62,6 +66,7 @@ export const NEED_LABELS: Record<Need, string> = {
   sink_in_stall: 'Sink in the cubicle',
   shelf: 'Shelf',
   gender_neutral: 'All-gender',
+  open_now: 'Open now',
 }
 
 export const ACCESS_LABELS: Record<AccessKind, string> = {
@@ -92,6 +97,7 @@ export interface Bathroom {
   changing_table?: ChangingTableAccess | null
   gender_neutral?: boolean | null
   adult_changing?: AdultChanging | null
+  hours?: HoursKind | null
   grab_bars?: boolean | null
   turning_space?: boolean | null
   accessible_locked?: boolean | null

@@ -191,3 +191,49 @@ suite('access claims', (test) => {
     eq(seen[0].claims, 1, 'including how thin the evidence is')
   })
 })
+
+suite('hours', (test) => {
+  const claim = (t, who, place, value) =>
+    t.as(who, () => t.val('select submit_access_claim($1,$2,$3)', [place.id, 'hours', value]))
+
+  test('hours settle like any other claim', async (t) => {
+    const owner = await t.newUser()
+    const place = await t.place({ owner })
+
+    await claim(t, await t.newUser(), place, 'always')
+    await claim(t, await t.newUser(), place, 'always')
+
+    eq(await t.val('select hours::text from bathrooms where id = $1', [place.id]), 'always',
+      'two people who agree settle it, same as every other field')
+  })
+
+  test('only the three answers are accepted', async (t) => {
+    const owner = await t.newUser()
+    const place = await t.place({ owner })
+
+    const who = await t.newUser()
+    await t.raises(() => claim(t, who, place, 'Mo-Fr 09:00-17:00'), '22023',
+      'a real schedule is refused: two people would never phrase one the same way, ' +
+      'so it could never corroborate')
+  })
+
+  test('open now matches what it can compute and nothing else', async (t) => {
+    const owner = await t.newUser()
+    const always = await t.place({ owner })
+    const venue = await t.place({ owner })
+    const unknown = await t.place({ owner })
+
+    await t.sql(`update bathrooms set hours = 'always' where id = $1`, [always.id])
+    await t.sql(`update bathrooms set hours = 'venue' where id = $1`, [venue.id])
+
+    // Null Island, where the test places live.
+    const open = await t.sql(
+      `select id from bathrooms_in_view(-0.01, -0.01, 0.01, 0.2, null, null, 300, array['open_now'])`)
+    const ids = open.map((r) => r.id)
+
+    ok(ids.includes(always.id), 'around-the-clock is open now')
+    ok(!ids.includes(venue.id),
+      "the venue's hours decide, and this map does not know them")
+    ok(!ids.includes(unknown.id), 'unknown is never a match, as everywhere else')
+  })
+})

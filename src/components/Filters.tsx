@@ -31,6 +31,7 @@ const NEED_GROUPS: { legend: string; needs: readonly Need[] }[] = [
   { legend: 'Changing', needs: ['changing', 'adult_changing', 'hoist'] },
   { legend: 'Managing', needs: ['sink_in_stall', 'shelf'] },
   { legend: 'Who it is for', needs: ['gender_neutral'] },
+  { legend: 'When', needs: ['open_now'] },
 ]
 
 function toggle<T>(set: Set<T>, value: T): Set<T> {
