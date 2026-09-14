@@ -219,6 +219,27 @@ button { font: inherit; color: inherit; }
   padding: 0 0 0.45rem;
 }
 
+/* Live feedback, not a control: quiet, but with the count banner's green so
+   the number reads as the same fact it was on the map. */
+.filters-count {
+  margin: 0;
+  padding: 0 0 0.75rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.83rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.filters-count::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 0.45rem;
+  border-radius: 99px;
+  background: var(--ok);
+  vertical-align: middle;
+}
+
 .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 
 .legend-note {
@@ -265,9 +286,15 @@ button { font: inherit; color: inherit; }
 
 /* The filter panel opens over this corner and is wide enough to cut a banner
    in half, which reads as broken text rather than as one thing in front of
-   another. Hide them while it is open — except the count, which is the
-   feedback for filtering itself and is narrow enough to clear the panel. */
-.banners.is-filtering .banner:not(.banner-count) { display: none; }
+   another. Hide them while it is open.
+   The count used to be exempted here, on the grounds that it is the feedback
+   for filtering and narrow enough to clear the panel. That held on a desktop,
+   where the panel is 21rem and hangs off the right. On a phone the panel is
+   `100vw - 1.5rem` and starts at the same 0.75rem the banners do, so it
+   covered the count exactly and all that showed was its green left border
+   bleeding round the panel's corner. The count lives inside the panel now
+   (`.filters-count`), where nothing can be in front of it. */
+.banners.is-filtering .banner { display: none; }
 
 .banners {
   position: absolute;

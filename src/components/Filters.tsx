@@ -2,6 +2,7 @@ import {
   ACCESS_KINDS, ACCESS_LABELS, VENUE_LABELS, VENUE_TYPES,
   type AccessKind, type Filters, type VenueType,
 } from '../lib/types'
+import { placesInView } from '../lib/format'
 import { accessColor } from '../map/icons'
 
 interface Props {
@@ -9,6 +10,10 @@ interface Props {
   onChange: (next: Filters) => void
   open: boolean
   onToggle: () => void
+  /** How many places survive the current view and filters, or null while the
+   *  data is unusable. This is the feedback for filtering, so it belongs with
+   *  the controls rather than on the map behind them. */
+  resultCount: number | null
 }
 
 function toggle<T>(set: Set<T>, value: T): Set<T> {
@@ -18,7 +23,7 @@ function toggle<T>(set: Set<T>, value: T): Set<T> {
   return next
 }
 
-export default function FiltersPanel({ filters, onChange, open, onToggle }: Props) {
+export default function FiltersPanel({ filters, onChange, open, onToggle, resultCount }: Props) {
   const count = filters.venues.size + filters.access.size + (filters.needsChanging ? 1 : 0)
 
   return (
@@ -29,6 +34,10 @@ export default function FiltersPanel({ filters, onChange, open, onToggle }: Prop
 
       {open && (
         <div className="filters-body">
+          {resultCount !== null && (
+            <p className="filters-count" role="status">{placesInView(resultCount)}</p>
+          )}
+
           <fieldset>
             <legend>Access</legend>
             <div className="chips">

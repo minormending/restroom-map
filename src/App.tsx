@@ -170,6 +170,7 @@ export default function App() {
           onChange={setFilters}
           open={filtersOpen}
           onToggle={() => setFiltersOpen((o) => !o)}
+          resultCount={error ? null : bathrooms.length}
         />
         {account && !adding && (
           <button type="button" className="add-place" onClick={() => { setSelectedId(null); setAdding(true) }}>
