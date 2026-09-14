@@ -312,5 +312,11 @@ both the bad news and the reason this project has a reason to exist.
   imported from NYC Open Data, 24 hand-seeded — and exactly one carries a
   confirmation. Real locations, but nobody has stood in front of most of them.
   Since access kind and confirmation became separate channels the map shows
-  this honestly: it is nearly all hollow pins. Consider trading the seeds for
-  a handful you have actually checked.
+  this honestly: it is nearly all hollow pins.
+
+  The app now asks: stand within 60m of a place with a fix better than 40m and
+  it offers to take a confirmation, which lands geo-verified because it carries
+  coordinates. Whether that is enough is the open question — it only fires for
+  somebody who is already there, so it cannot manufacture the first few. Those
+  still have to be walked to. Consider trading the seeds for a handful you have
+  actually checked.
