@@ -1,13 +1,28 @@
 # Restroom Map
 
-A crowdsourced bathroom finder. Static frontend on GitHub Pages, Postgres +
-PostGIS behind it. The browser is treated as hostile throughout: it can read
-public data and propose writes, but it never decides whether a write is
-legitimate.
+A crowdsourced map of public restrooms, built around the question the other
+maps do not answer: **will it work for me?**
 
-**Milestone M0 — read-only map.** The question this milestone exists to answer:
-*can you find a bathroom faster here than in Google Maps?* No accounts, no
-submissions, no credits. Those are M2 and M3.
+Google Maps knows a restroom exists. It does not know whether you can get in
+without steps, whether the accessible stall is kept locked and the key is
+behind a counter, whether there is an adult changing bench, whether the sink is
+inside the cubicle, whether there is anywhere to put anything down. For a lot
+of people those are not details — they decide whether the journey is worth
+making at all.
+
+So the map is useful to anybody looking for a toilet, and it is built for the
+people for whom the wrong answer costs a wasted trip they may not be able to
+repeat.
+
+Nothing else records most of this, which is the reason it is worth
+contributing to and the reason most fields start empty. An accessibility
+answer needs **two people who agree** before it is shown as fact; until then
+the map says how thin the evidence is, and says so when people disagree.
+Guessing is worse than not knowing here.
+
+Static frontend on GitHub Pages, Postgres + PostGIS behind it. The browser is
+treated as hostile throughout: it can read public data and propose writes, but
+it never decides whether a write is legitimate.
 
 ## Running it
 
