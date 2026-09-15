@@ -45,3 +45,25 @@ export async function geocode(
     }
   })
 }
+
+/**
+ * A geocoder result as a line somebody would write on an envelope.
+ *
+ * Two repeats to clear, both of which Photon produces for ordinary addresses:
+ *
+ *   the street, twice — `name` is the most specific thing it found, which for
+ *   a street address is the house number on the street that `context` then
+ *   opens with: "180 Maiden Lane" + "Maiden Lane, ...".
+ *
+ *   the city and the state, when they are the same place. New York, New York.
+ *
+ * The street test only looks at the first part, which is the only one that can
+ * be the street. Testing them all would eat the city out of "New York Public
+ * Library, Fifth Avenue, New York".
+ */
+export function placeLabel({ name, context }: Place): string {
+  const parts = context ? context.split(', ') : []
+  if (parts[0] && name.toLowerCase().includes(parts[0].toLowerCase())) parts.shift()
+  const deduped = parts.filter((part, i) => part !== parts[i - 1])
+  return [name, ...deduped].filter(Boolean).join(', ').slice(0, 200)
+}
