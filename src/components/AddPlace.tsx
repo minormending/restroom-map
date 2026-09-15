@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import SearchBar from './SearchBar'
+import { placeLabel, type Place } from '../lib/geocode'
 import { submitBathroom, type SubmitResult } from '../lib/submissions'
 import {
   ACCESS_KINDS, ACCESS_LABELS, VENUE_LABELS, VENUE_TYPES,
@@ -7,17 +9,36 @@ import {
 
 interface Props {
   center: [number, number]
+  onFlyTo: (center: [number, number], zoom: number) => void
   onCancel: () => void
   onAdded: (id: string) => void
 }
 
+/** Close enough to see a doorway, so nudging the crosshair moves metres. */
+const DOORWAY_ZOOM = 18
+
 /**
  * Two steps on purpose. Positioning a pin and describing a place are different
  * jobs, and doing both at once on a phone means the keyboard covers the map.
+ *
+ * TWO WAYS TO PLACE IT, AND THE TYPED ONE IS FIRST
+ *
+ * The crosshair was the only way in, and beta testers said the same thing
+ * about it: they knew the address, and lining a reticle up with a building
+ * they could not see was work they had no way to do well. Somebody who can
+ * type "180 Maiden Lane" should not have to find it on a map first — that is
+ * the geocoder's job, and this app already runs one for the search bar.
+ *
+ * So an address goes straight through to the description, carrying its own
+ * coordinates. The crosshair stays for the case the typed one cannot serve —
+ * a bathroom in a park, at a beach, anywhere without a street number — and
+ * for anyone who wants to correct where the geocoder landed.
  */
-export default function AddPlace({ center, onCancel, onAdded }: Props) {
+export default function AddPlace({ center, onFlyTo, onCancel, onAdded }: Props) {
   const [step, setStep] = useState<'place' | 'describe'>('place')
   const [at, setAt] = useState<[number, number]>(center)
+  /** Whether `at` came from a typed address rather than the crosshair. */
+  const [searched, setSearched] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [venue, setVenue] = useState<VenueType>('cafe')
   const [access, setAccess] = useState<AccessKind>('open')
@@ -28,19 +49,47 @@ export default function AddPlace({ center, onCancel, onAdded }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [duplicate, setDuplicate] = useState<string | null>(null)
 
+  /**
+   * An address answers the question outright, so this does not hand the person
+   * back to the crosshair to confirm what they just typed.
+   *
+   * The map is flown there anyway. Not for this step — for the "move" link on
+   * the next one, so that if the geocoder put the pin on the wrong side of the
+   * block, the crosshair is already looking at the right block when they go
+   * back to fix it.
+   */
+  const choose = (place: Place) => {
+    const point: [number, number] = [place.lng, place.lat]
+    setAt(point)
+    setSearched(placeLabel(place))
+    if (!address) setAddress(placeLabel(place))
+    onFlyTo(point, DOORWAY_ZOOM)
+    setStep('describe')
+  }
+
   if (step === 'place') {
     return (
       <div className="placing">
-        <p className="placing-title">Line the crosshair up with the bathroom</p>
-        <p className="placing-note">Drag and zoom the map. Get as close as you can.</p>
+        <p className="placing-title">Where is it?</p>
+        <SearchBar
+          near={center}
+          onPick={choose}
+          placeholder="Type the address"
+          label="Search for the address of the new place"
+          dropUp
+        />
+        <p className="placing-note">
+          No address? Line the crosshair up with the bathroom instead — drag and
+          zoom the map, and get as close as you can.
+        </p>
         <div className="placing-actions">
           <button type="button" className="btn-quiet" onClick={onCancel}>Cancel</button>
           <button
             type="button"
             className="btn-primary"
-            onClick={() => { setAt(center); setStep('describe') }}
+            onClick={() => { setAt(center); setSearched(null); setStep('describe') }}
           >
-            It's here
+            Use the crosshair
           </button>
         </div>
       </div>
@@ -75,11 +124,20 @@ export default function AddPlace({ center, onCancel, onAdded }: Props) {
         <span className="sheet-kind">New place</span>
         <h2>Describe it</h2>
         <p className="sheet-addr">
-          {at[1].toFixed(5)}, {at[0].toFixed(5)}
+          {searched ?? `${at[1].toFixed(5)}, ${at[0].toFixed(5)}`}
           <button type="button" className="linkish" onClick={() => setStep('place')}>
             move
           </button>
         </p>
+        {searched && (
+          // A geocoded address lands on the building, which is not the same as
+          // the door and is sometimes not even the right side of it. Worth one
+          // line, because the person who typed it is the only one who knows.
+          <p className="placing-note">
+            Placed from the address. Use <strong>move</strong> if the pin should
+            sit somewhere more exact.
+          </p>
+        )}
       </header>
 
       <label className="field">

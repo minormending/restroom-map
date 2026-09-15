@@ -329,6 +329,7 @@ export default function App() {
       {adding && (
         <AddPlace
           center={mapCenter}
+          onFlyTo={(center, zoom) => setFlyTo({ center, zoom, nonce: Date.now() })}
           onCancel={() => setAdding(false)}
           onAdded={(id) => {
             setAdding(false)

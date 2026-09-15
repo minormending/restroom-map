@@ -169,6 +169,10 @@ button { font: inherit; color: inherit; }
   cursor: pointer;
   font-size: 0.88rem;
 }
+/* Anchored to the bottom of the screen, a list hanging off the input's lower
+   edge is off-screen. Used by the add-a-place panel. */
+.search.is-up .search-results { top: auto; bottom: calc(100% + 0.35rem); }
+
 .search-results button:hover,
 .search-results button.is-active { background: var(--accent-soft); }
 .search-results button span { color: var(--ink-3); font-size: 0.8rem; }
