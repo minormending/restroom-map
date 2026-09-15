@@ -213,7 +213,12 @@ export default function App() {
   }, [])
 
   const selected = bathrooms.find((b) => b.id === selectedId) ?? null
-  const hint = LOCATION_HINT[locStatus]
+  // Two of these say "search above", and while a place is being added there is
+  // no search above — the top bar gives its box up to the panel's address
+  // field. An instruction pointing at something that is not on screen is worse
+  // than no instruction, and none of this is what somebody placing a pin is
+  // being asked about anyway.
+  const hint = adding ? undefined : LOCATION_HINT[locStatus]
 
   return (
     <div className="app">
@@ -222,10 +227,20 @@ export default function App() {
       <h1 className="sr-only">Restroom Map — find a bathroom near you</h1>
 
       <div className="top-bar">
-        <SearchBar
-          near={userLocation ?? FALLBACK_CENTER}
-          onPick={(p) => setFlyTo({ center: [p.lng, p.lat], zoom: 15.5, nonce: Date.now() })}
-        />
+        {/* One search box at a time. While a place is being added the panel
+            has its own address field, and two identically styled boxes doing
+            different things — one moves the map, one commits a location — is
+            a trap: the difference is invisible, and this one would still be
+            holding whatever was last searched. The spacer keeps the controls
+            beside it where they were rather than letting them jump left. */}
+        {adding ? (
+          <div className="search-gap" />
+        ) : (
+          <SearchBar
+            near={userLocation ?? FALLBACK_CENTER}
+            onPick={(p) => setFlyTo({ center: [p.lng, p.lat], zoom: 15.5, nonce: Date.now() })}
+          />
+        )}
         <button
           type="button"
           className="view-toggle"

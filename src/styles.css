@@ -114,6 +114,10 @@ button { font: inherit; color: inherit; }
 
 .search { position: relative; flex: 1 1 auto; max-width: 26rem; }
 
+/* Stands in for .search while a place is being added: same footprint, nothing
+   in it, so List and Filters keep their position instead of sliding left. */
+.search-gap { flex: 1 1 auto; max-width: 26rem; }
+
 .search input {
   width: 100%;
   font: inherit;
