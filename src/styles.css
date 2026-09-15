@@ -39,6 +39,13 @@
      banners and, on a phone, the filters panel — encode it, and because the
      bar is not always one row tall. */
   --below-bar: 3.6rem;
+
+  /* The smallest a control may be when a thumb is the pointer. 44px is
+     Apple's figure; Android asks 48. WCAG 2.2 AA only asks 24, and every
+     control in the detail sheet already cleared that — which is why nothing
+     flagged them and why they were still 19 to 37px. That floor is the
+     accessibility minimum, not the size a hand wants. */
+  --touch: 2.75rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -390,6 +397,19 @@ button { font: inherit; color: inherit; }
     border: 1px solid var(--rule);
     border-radius: 10px;
   }
+}
+
+/* A 44px filled circle in the corner would be the heaviest thing in the
+   header, so the ring stays 1.9rem and the pseudo-element is what a thumb
+   hits. It is a child of the button, so the press still lands on it. */
+.sheet-close::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: var(--touch);
+  height: var(--touch);
 }
 
 .sheet-close {
@@ -800,6 +820,7 @@ button { font: inherit; color: inherit; }
 .report-btn {
   flex: 1 1 auto;
   min-width: 6.5rem;
+  min-height: var(--touch);
   padding: 0.45rem 0.7rem;
   border-radius: 6px;
   border: 1px solid var(--rule);
@@ -819,6 +840,9 @@ button { font: inherit; color: inherit; }
 .flag-open,
 .flag-sent {
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch);
   background: none;
   border: none;
   padding: 0;
@@ -1356,7 +1380,7 @@ button { font: inherit; color: inherit; }
 
 .sheet-go {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.6rem;
   margin: 0.15rem 0 0;
   font-size: 0.86rem;
@@ -1367,12 +1391,16 @@ button { font: inherit; color: inherit; }
   font-variant-numeric: tabular-nums;
 }
 
+/* The action of somebody who has already decided, and it was 29px tall. */
 .directions {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch);
   color: var(--accent);
   font-weight: 500;
   text-decoration: none;
   border: 1px solid var(--accent);
   border-radius: 6px;
-  padding: 0.2rem 0.6rem;
+  padding: 0.2rem 0.9rem;
 }
 .directions:hover { background: var(--accent-soft); }
