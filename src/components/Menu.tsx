@@ -17,8 +17,12 @@ interface Props {
  * spend on a permanent row of things nobody taps twice.
  *
  * The fifth is the point. A beta tester with a complaint had nowhere to put
- * it, so it is the first thing here and the only one that is a form rather
- * than a link — a bug report is worth more than a version number.
+ * it, and it is the only row here that is a form rather than a link.
+ *
+ * "What is this?" goes above it even so. Somebody opening this menu is more
+ * often lost than cross, and the shorter answer should not be underneath a
+ * form — a question reads past in a second, whereas the form is the largest
+ * thing in the panel and pushes everything under it off a phone screen.
  *
  * It writes to the moderation queue, not to GitHub. The issue tracker is
  * named as the contact in both legal pages, and it serves the people least
@@ -54,6 +58,11 @@ export default function Menu({ onClose, onAbout }: Props) {
           <h2>Restroom Map</h2>
         </header>
 
+        <button type="button" className="menu-row" onClick={onAbout}>
+          <span className="menu-label">What is this?</span>
+          <span className="menu-note">The short version, again.</span>
+        </button>
+
         <section className="menu-row is-primary" aria-label="Send feedback">
           <span className="menu-label">Tell us what is wrong</span>
           <span className="menu-note">
@@ -61,11 +70,6 @@ export default function Menu({ onClose, onAbout }: Props) {
           </span>
           <FeedbackForm />
         </section>
-
-        <button type="button" className="menu-row" onClick={onAbout}>
-          <span className="menu-label">What is this?</span>
-          <span className="menu-note">The short version, again.</span>
-        </button>
 
         <a className="menu-row" href="privacy.html">
           <span className="menu-label">Privacy</span>
