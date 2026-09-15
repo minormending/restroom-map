@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { buildLabel } from '../lib/build'
 
 /**
  * Which build you are actually looking at, and a way out when it is the wrong
@@ -20,9 +21,7 @@ import { useState } from 'react'
 export default function BuildTag() {
   const [clearing, setClearing] = useState(false)
 
-  // A count renders as a version; anything else (a git-less build) is shown
-  // as-is, so it cannot be mistaken for one.
-  const label = /^\d+$/.test(__BUILD_ID__) ? `v${__BUILD_ID__}` : __BUILD_ID__
+  const label = buildLabel()
 
   const refresh = async () => {
     setClearing(true)

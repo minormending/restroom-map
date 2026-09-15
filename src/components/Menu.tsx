@@ -1,10 +1,7 @@
 import { useEffect, useRef } from 'react'
 import BuildTag from './BuildTag'
+import FeedbackForm from './FeedbackForm'
 import { useEscape } from '../lib/useEscape'
-
-/** The contact address both legal pages already give. Same one, so a person
- *  who reads the privacy page and a person who taps here arrive together. */
-const ISSUES = 'https://github.com/minormending/restroom-map/issues'
 
 interface Props {
   onClose: () => void
@@ -20,18 +17,14 @@ interface Props {
  * spend on a permanent row of things nobody taps twice.
  *
  * The fifth is the point. A beta tester with a complaint had nowhere to put
- * it: the issue tracker is named in both legal pages as the way to reach
- * somebody, which is no use at all to a person who has not read the legal
- * pages. Now it is one tap from the map and the first thing in the list,
- * because a bug report is worth more than a version number.
+ * it, so it is the first thing here and the only one that is a form rather
+ * than a link — a bug report is worth more than a version number.
  *
- * GITHUB, FOR NOW
- *
- * It costs nothing, it threads, and it is already the declared contact. What
- * it does not do is take a complaint from somebody without a GitHub account,
- * which is most people this map is for. The upgrade is a form that writes to
- * the same moderation queue the flags use; this is the thing that can ship
- * today, and swapping the destination is one line.
+ * It writes to the moderation queue, not to GitHub. The issue tracker is
+ * named as the contact in both legal pages, and it serves the people least
+ * likely to need it: somebody with an account already open. Everybody else
+ * was being asked to sign up somewhere before they could say a door code was
+ * wrong.
  */
 export default function Menu({ onClose, onAbout }: Props) {
   const panel = useRef<HTMLElement>(null)
@@ -61,17 +54,13 @@ export default function Menu({ onClose, onAbout }: Props) {
           <h2>Restroom Map</h2>
         </header>
 
-        <a
-          className="menu-row is-primary"
-          href={`${ISSUES}/new`}
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          <span className="menu-label">Report a problem or ask for something</span>
+        <section className="menu-row is-primary" aria-label="Send feedback">
+          <span className="menu-label">Tell us what is wrong</span>
           <span className="menu-note">
-            Bugs, a place that is wrong, anything missing. Opens the issue tracker.
+            Bugs, a place that is wrong, anything missing. No account needed.
           </span>
-        </a>
+          <FeedbackForm />
+        </section>
 
         <button type="button" className="menu-row" onClick={onAbout}>
           <span className="menu-label">What is this?</span>

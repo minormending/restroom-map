@@ -13,7 +13,7 @@
  *   node scripts/db.mjs queue               open moderation flags
  *   node scripts/db.mjs hide <id> "<why>"   take a place off the map now
  *   node scripts/db.mjs unhide <id>         put it back
- *   node scripts/db.mjs resolve <flag-id>   mark a flag dealt with
+ *   node scripts/db.mjs resolve <queue-id>  mark a flag or feedback dealt with
  *
  * Needs SUPABASE_DB_PASSWORD in .env — just the password. Host, port and user
  * are derived from VITE_SUPABASE_URL. Set SUPABASE_DB_URL instead if you'd
@@ -178,11 +178,16 @@ async function unhide(client, id) {
 }
 
 async function resolve(client, id) {
-  const { rows } = await client.query(
-    `update flags set resolved_at=now() where id=$1 and resolved_at is null
-     returning reason`, [id])
-  if (rows.length === 0) throw new Error(`no open flag with id ${id}`)
-  console.log(`resolved: ${rows[0].reason}`)
+  // The queue has two sources now. An id from it is a flag or a piece of
+  // feedback and the person typing it has no reason to know which — the queue
+  // does not say, and should not have to.
+  for (const [table, column] of [['flags', 'reason'], ['feedback', 'message']]) {
+    const { rows } = await client.query(
+      `update ${table} set resolved_at=now() where id=$1 and resolved_at is null
+       returning ${column} as what`, [id])
+    if (rows.length > 0) return console.log(`resolved: ${rows[0].what}`)
+  }
+  throw new Error(`nothing open in the queue with id ${id}`)
 }
 
 // --- entry -----------------------------------------------------------------

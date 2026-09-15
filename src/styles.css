@@ -690,6 +690,14 @@ button { font: inherit; color: inherit; }
 .intro:focus-visible,
 .sheet:focus-visible { outline: none; }
 
+/* The sheet is a flex column with a max height, so its children shrink by
+   default — and a child that shrinks below its content does not scroll, it
+   overlaps what is next to it. The menu's feedback form was the first thing
+   in here tall enough to show it: the heading, the form and the row below it
+   all landed on top of each other. The sheet scrolls; its children do not
+   give up height to let it avoid that. */
+.sheet > * { flex-shrink: 0; }
+
 /* ---------- the intro ---------- */
 
 /* Bottom-anchored like the nearby prompt, and for the same reason: it is
@@ -1311,6 +1319,39 @@ button { font: inherit; color: inherit; }
 .menu-note { font-size: 0.8rem; color: var(--ink-3); }
 
 .menu-foot { display: flex; align-items: center; gap: 0.5rem; }
+
+/* The form inside the primary row. It is a form and not a link now, so the
+   row is a section rather than a button and stops being hoverable. */
+.menu-row.is-primary { cursor: default; }
+.menu-row.is-primary:hover { border-color: var(--accent); }
+
+.feedback { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 0.7rem; }
+
+.feedback-kind { border: none; margin: 0; padding: 0; }
+.feedback-kind legend {
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  padding: 0 0 0.4rem;
+}
+
+.feedback textarea {
+  font: inherit;
+  font-family: var(--f-body);
+  font-size: 0.94rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.45rem 0.55rem;
+  resize: vertical;
+}
+
+.feedback-send { min-height: var(--touch); align-self: flex-start; }
+
+.feedback-done { margin: 0.7rem 0 0; font-size: 0.88rem; color: var(--ok); }
 
 /* The detail sheet covers the bottom-left on phones.
    This was written as `.sheet ~ .legal-links`, which could never match: `~`
