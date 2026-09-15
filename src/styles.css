@@ -1019,7 +1019,12 @@ button { font: inherit; color: inherit; }
 
 .field { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.84rem; }
 .field > span { color: var(--ink-3); }
-.field em { font-style: normal; opacity: 0.7; }
+/* "optional", beside a field label. De-emphasised by size, not by opacity:
+   the label is already var(--ink-3), which the token block notes is 4.77:1 —
+   the lightest ink that clears AA. Fading it 30% composited it toward the
+   surface and took it to roughly 3.1:1, which is the exact failure the comment
+   on that token was written to prevent. */
+.field em { font-style: normal; font-size: 0.94em; }
 .field input,
 .field select {
   font: inherit;
