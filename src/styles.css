@@ -1307,13 +1307,18 @@ button { font: inherit; color: inherit; }
   cursor: pointer;
 }
 .menu-row:hover { border-color: var(--accent); }
-/* The reason the menu exists, so it does not look like the legal links. */
-.menu-row.is-primary { border-color: var(--accent); background: var(--accent-soft); }
-/* --ink-3 is picked against the plain surface and measures 3.93:1 on this
-   tint (4.17 in dark) — under AA both ways. --ink-2 gives 5.01 and 6.22.
-   Tinting a row changes what its text may be, which is easy to forget and
-   was caught here by the audit rather than by reading. */
-.menu-row.is-primary .menu-note { color: var(--ink-2); }
+/* The reason the menu exists, so it does not look like the legal links.
+   The border does that and the fill used to help — but --ink-3 is picked
+   against the plain surface and measures 3.93:1 on --accent-soft (4.17 in
+   dark), so every piece of secondary text dropped under AA the moment it sat
+   on the tint. That caught the note first and then, when the form went in,
+   both of its field labels: the same mistake twice in an hour.
+
+   The fill went instead of a third override. A form is the largest thing in
+   this panel and does not need a tint to be found, and now nothing put in
+   here later inherits a background that quietly changes what colour its text
+   is allowed to be. */
+.menu-row.is-primary { border-color: var(--accent); }
 
 .menu-label { font-size: 0.92rem; font-weight: 500; }
 .menu-note { font-size: 0.8rem; color: var(--ink-3); }
