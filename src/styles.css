@@ -1301,6 +1301,11 @@ button { font: inherit; color: inherit; }
 .menu-row:hover { border-color: var(--accent); }
 /* The reason the menu exists, so it does not look like the legal links. */
 .menu-row.is-primary { border-color: var(--accent); background: var(--accent-soft); }
+/* --ink-3 is picked against the plain surface and measures 3.93:1 on this
+   tint (4.17 in dark) — under AA both ways. --ink-2 gives 5.01 and 6.22.
+   Tinting a row changes what its text may be, which is easy to forget and
+   was caught here by the audit rather than by reading. */
+.menu-row.is-primary .menu-note { color: var(--ink-2); }
 
 .menu-label { font-size: 0.92rem; font-weight: 500; }
 .menu-note { font-size: 0.8rem; color: var(--ink-3); }
