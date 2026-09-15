@@ -7,6 +7,7 @@ import NearbyPrompt from './components/NearbyPrompt'
 import PlaceList from './components/PlaceList'
 import Intro, { introSeen } from './components/Intro'
 import Menu from './components/Menu'
+import FeedbackSheet from './components/FeedbackSheet'
 import Profile from './components/Profile'
 import FiltersPanel from './components/Filters'
 import SearchBar from './components/SearchBar'
@@ -65,6 +66,7 @@ export default function App() {
   const [asList, setAsList] = useState(false)
   const [intro, setIntro] = useState(() => !introSeen())
   const [menuOpen, setMenuOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   const requestId = useRef(0)
 
@@ -344,8 +346,11 @@ export default function App() {
         <Menu
           onClose={() => setMenuOpen(false)}
           onAbout={() => { setMenuOpen(false); setIntro(true) }}
+          onFeedback={() => { setMenuOpen(false); setFeedbackOpen(true) }}
         />
       )}
+
+      {feedbackOpen && <FeedbackSheet onClose={() => setFeedbackOpen(false)} />}
 
       {adding && <div className="crosshair" aria-hidden="true" />}
 

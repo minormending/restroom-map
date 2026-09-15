@@ -1325,11 +1325,6 @@ button { font: inherit; color: inherit; }
 
 .menu-foot { display: flex; align-items: center; gap: 0.5rem; }
 
-/* The form inside the primary row. It is a form and not a link now, so the
-   row is a section rather than a button and stops being hoverable. */
-.menu-row.is-primary { cursor: default; }
-.menu-row.is-primary:hover { border-color: var(--accent); }
-
 .feedback { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 0.7rem; }
 
 .feedback-kind { border: none; margin: 0; padding: 0; }

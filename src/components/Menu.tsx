@@ -1,10 +1,10 @@
 import BuildTag from './BuildTag'
-import FeedbackForm from './FeedbackForm'
 import Sheet from './Sheet'
 
 interface Props {
   onClose: () => void
   onAbout: () => void
+  onFeedback: () => void
 }
 
 /**
@@ -28,8 +28,13 @@ interface Props {
  * likely to need it: somebody with an account already open. Everybody else
  * was being asked to sign up somewhere before they could say a door code was
  * wrong.
+ *
+ * The form itself lives in its own sheet. Expanded here it was 456px of a
+ * 790px menu and pushed Privacy, Terms and the build number below the fold —
+ * see FeedbackSheet. What stays is a row, like the rest of them, so this is
+ * four lines somebody can read without scrolling.
  */
-export default function Menu({ onClose, onAbout }: Props) {
+export default function Menu({ onClose, onAbout, onFeedback }: Props) {
   return (
     <Sheet label="Menu" className="menu-sheet" onClose={onClose}>
       <header className="sheet-head">
@@ -41,13 +46,12 @@ export default function Menu({ onClose, onAbout }: Props) {
         <span className="menu-note">The short version, again.</span>
       </button>
 
-      <section className="menu-row is-primary" aria-label="Send feedback">
+      <button type="button" className="menu-row is-primary menu-feedback" onClick={onFeedback}>
         <span className="menu-label">Tell us what is wrong</span>
         <span className="menu-note">
           Bugs, a place that is wrong, anything missing. No account needed.
         </span>
-        <FeedbackForm />
-      </section>
+      </button>
 
       <a className="menu-row" href="privacy.html">
         <span className="menu-label">Privacy</span>
