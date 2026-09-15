@@ -406,7 +406,11 @@ button { font: inherit; color: inherit; }
    it and where it read as directions. */
 .sheet-operator { margin: 0.1rem 0 0; font-size: 0.82rem; color: var(--ink-3); }
 
-.confidence {
+/* The seasonal note is the same shape of statement as the confidence line —
+   one sentence about whether to trust this pin today — so it wears the same
+   box rather than inventing a second vocabulary for the same job. */
+.confidence,
+.seasonal {
   margin: 0;
   font-size: 0.9rem;
   padding: 0.55rem 0.7rem;
@@ -415,8 +419,10 @@ button { font: inherit; color: inherit; }
   border-left: 3px solid var(--ink-3);
 }
 .confidence.tone-good { border-left-color: var(--ok); color: var(--ok); }
-.confidence.tone-warn { border-left-color: var(--warn); color: var(--warn); }
-.confidence.tone-unknown { color: var(--ink-3); }
+.confidence.tone-warn,
+.seasonal.tone-warn { border-left-color: var(--warn); color: var(--warn); }
+.confidence.tone-unknown,
+.seasonal.tone-unknown { color: var(--ink-3); }
 
 .code-block {
   display: flex;

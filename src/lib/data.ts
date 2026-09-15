@@ -153,7 +153,7 @@ export async function fetchDetail(id: string): Promise<Partial<Bathroom>> {
   const [detail, code, claims] = await Promise.all([
     supabase
       .from('bathrooms')
-      .select('address, floor_hint, operator, wheelchair, changing_table, gender_neutral, adult_changing, grab_bars, turning_space, accessible_locked, sink_in_stall, shelf, hours')
+      .select('address, floor_hint, operator, wheelchair, changing_table, gender_neutral, adult_changing, grab_bars, turning_space, accessible_locked, sink_in_stall, shelf, hours, closed_in_winter')
       .eq('id', id)
       .maybeSingle(),
     supabase.rpc('get_code', { p_bathroom_id: id }),

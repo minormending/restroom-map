@@ -78,3 +78,25 @@ export function describeDistance(metres: number): string {
   if (metres < 1000) return `${Math.round(metres / 50) * 50} m away`
   return `${(metres / 1000).toFixed(metres < 10_000 ? 1 : 0)} km away`
 }
+
+/**
+ * What to say about a place the operator shuts for the season.
+ *
+ * Two sentences, because the same fact is a different thing in July and in
+ * January. Neither of them says the place is open: NYC Parks publishes that a
+ * comfort station is winterised, not the day it locks or the day it reopens,
+ * and the months either side are genuinely uncertain. So the cold half of the
+ * year warns, and the warm half tells you what to expect later.
+ *
+ * November through March, because that is the span NYC Parks' own reasons
+ * describe — an unheated building, shut while the pipes would freeze.
+ */
+export function seasonalLine(): { text: string; tone: 'warn' | 'unknown' } {
+  const month = Number(new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', month: 'numeric',
+  }).format(new Date()))
+  const winter = month >= 11 || month <= 3
+  return winter
+    ? { text: 'Likely closed right now — NYC Parks shuts this one for the winter.', tone: 'warn' }
+    : { text: 'Closes for the winter, roughly November to March.', tone: 'unknown' }
+}

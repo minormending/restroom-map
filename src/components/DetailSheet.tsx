@@ -6,7 +6,7 @@ import FlagLink from './FlagLink'
 import ReportBox from './ReportBox'
 import type { Account } from '../lib/auth'
 import { useEffect, useRef, useState } from 'react'
-import { confidenceLine, describeDistance, metresBetween } from '../lib/format'
+import { confidenceLine, describeDistance, metresBetween, seasonalLine } from '../lib/format'
 import { ACCESS_LABELS, VENUE_LABELS, type Bathroom } from '../lib/types'
 import { accessColor } from '../map/icons'
 
@@ -45,6 +45,7 @@ export default function DetailSheet({
   const [localCode, setLocalCode] = useState<string | null>(null)
   const merged = { ...bathroom, ...detail, ...(localCode ? { code: localCode } : {}) }
   const confidence = confidenceLine(merged.confirms, merged.troubles, merged.last_confirmed)
+  const season = seasonalLine()
   const accent = accessColor(merged.access_kind)
 
   const away = near ? describeDistance(metresBetween(near, [merged.lng, merged.lat])) : null
@@ -80,6 +81,8 @@ export default function DetailSheet({
       </header>
 
       <p className={`confidence tone-${confidence.tone}`}>{confidence.text}</p>
+
+      {merged.closed_in_winter && <p className={`seasonal tone-${season.tone}`}>{season.text}</p>}
 
       {merged.access_kind === 'code_required' && (
         <div className="code-block">

@@ -98,6 +98,8 @@ export interface Bathroom {
   gender_neutral?: boolean | null
   adult_changing?: AdultChanging | null
   hours?: HoursKind | null
+  /** Shut for the season. Operator-sourced only — see migration 021. */
+  closed_in_winter?: boolean | null
   grab_bars?: boolean | null
   turning_space?: boolean | null
   accessible_locked?: boolean | null
