@@ -258,6 +258,8 @@ Business removal requests arrive through the same queue and sort to the top —
 
 ## Importing
 
+### NYC Open Data, "Public Restrooms"
+
 ```bash
 node scripts/import-nyc.mjs --bbox seed           # dry run, seeded area
 node scripts/import-nyc.mjs --bbox seed --apply   # write
@@ -302,8 +304,67 @@ an infant to a table he cannot reach. The filters follow the same split —
 step-free excludes `partial`, changing table includes the gendered ones and the
 detail sheet says which.
 
+### NYC Parks, which is three datasets
+
+```bash
+node scripts/import-parks.mjs           # dry run
+node scripts/import-parks.mjs --apply   # write
+```
+
+The park restrooms were already here — `i7jb-7jku` is the same agency's same
+facilities, and 646 of the 715 comfort stations NYC Parks maps already had a
+pin within 30m. Re-importing the locations is close to a no-op. What that
+dataset does not have is **how stale it is**: `i7jb-7jku` was last refreshed in
+November 2025, and Parks' inspection list is refreshed weekly.
+
+So this importer is mostly not about adding pins.
+
+| Dataset | What it has | What it lacks |
+| --- | --- | --- |
+| `n8q6-i44s` NYC Parks Structures | every comfort station as a building footprint | any operational status at all |
+| `9byw-znpj` PIP – Public Restrooms | long-term closures, winterisation | coordinates; only `prop_id` and `cs_id` |
+| `buk3-3qpr` PIP – All Sites (MAPPED) | park property polygons | — |
+
+Structures give locations, the inspection list gives status, and the polygons
+join a `prop_id` to somewhere on a map. All three declare no licence, on the
+same terms as `i7jb-7jku` above.
+
+**The join is property-level and the importer says so.** Nothing published maps
+a `cs_id` to a point, so a park with two comfort stations where one is closed
+is genuinely ambiguous — those are printed for a person to decide, never acted
+on. A pin is hidden only when every station in its park is closed and the map
+shows no more pins than there are stations.
+
+Two more rules, both about not overriding people:
+
+- **A confirmation outranks the inspection record.** Somebody who reported
+  using a restroom in the last 90 days beats a weekly municipal refresh; those
+  are printed, not hidden. Removing a place somebody just confirmed teaches
+  people that confirming does nothing.
+- **Repairs end.** Anything this importer hid, it un-hides once Parks stops
+  saying it is closed — otherwise the first run quietly becomes permanent.
+  `hidden_reason` is stamped `nyc-parks:` so a later run can find its own work
+  and leave operator takedowns alone.
+
+Winterisation lands in `closed_in_winter`, which is a column rather than an
+`hours_kind` because the two compose: a park restroom is open while the park
+is, during the half of the year it is open at all. It deliberately does not
+touch the `open_now` filter — every imported park row is `hours = 'venue'`,
+which never matches `open_now` anyway, so wiring it in would be machinery with
+no effect.
+
+It is also not claimable. Nobody standing outside a restroom in July can see
+whether it shuts in December; that one only ever comes from the operator.
+
+### What no dataset has
+
 No dataset anywhere carries door codes. That part cannot be imported, which is
 both the bad news and the reason this project has a reason to exist.
+
+Nor does any of them carry the six fields this map exists to collect — an adult
+changing bench, grab bars, turning space, whether the accessible stall is
+locked, a sink in the cubicle, a shelf. Not NYC, not Parks, not Refuge, not
+OSM. Those can only be walked to.
 
 ## Still to settle before this goes public
 
@@ -317,10 +378,13 @@ Ordered by what actually stops a launch, not by how much work each is.
   here that is a hard no.
 
 - **The map cannot yet answer the question it now asks.** The front page
-  promises to say whether a restroom will work for you. Today: 84 places, and
-  **zero** of them record an adult changing bench, grab bars, turning space,
-  whether the accessible stall is locked, a sink in the cubicle or a shelf.
-  Zero claims, one account, one confirmation.
+  promises to say whether a restroom will work for you. Today: 1,038 places,
+  and **zero** of them record an adult changing bench, grab bars, turning
+  space, whether the accessible stall is locked, a sink in the cubicle or a
+  shelf. Zero claims, one account, one confirmation.
+
+  Importing more places does not move this. It has gone from 84 to 1,038 and
+  the number that matters is still zero.
 
   That gap is the reason the project exists — nobody else records this — but a
   promise with nothing behind it is worse than no promise. It wants a dozen
