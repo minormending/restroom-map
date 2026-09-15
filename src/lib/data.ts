@@ -86,10 +86,14 @@ function looksLikeNoSignal(error: { code?: string } | null, thrown?: unknown): b
  * and so does the offline fallback, which is the reason those two helpers are
  * worth keeping rather than pushing entirely into SQL.
  */
+/** The most any one viewport query returns. Exported so the count can say
+ *  "300+" rather than presenting a limit as a total. */
+export const MAX_IN_VIEW = 300
+
 export async function fetchInView(
   view: Bounds,
   filters: Filters,
-  maxResults = 300,
+  maxResults = MAX_IN_VIEW,
 ): Promise<InView> {
   if (!supabase) {
     return {

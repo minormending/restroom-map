@@ -15,7 +15,7 @@ import {
 } from './lib/config'
 import { currentAccount, onAccountChange, type Account } from './lib/auth'
 import { fetchBalance } from './lib/credits'
-import { fetchDetail, fetchInView } from './lib/data'
+import { MAX_IN_VIEW, fetchDetail, fetchInView } from './lib/data'
 import { rememberedAt } from './lib/lastSeen'
 import { placeYouAreAt, type Fix } from './lib/nearby'
 import { placesInView, relativeDays } from './lib/format'
@@ -240,6 +240,7 @@ export default function App() {
           open={filtersOpen}
           onToggle={() => setFiltersOpen((o) => !o)}
           resultCount={error ? null : bathrooms.length}
+          resultCapped={bathrooms.length >= MAX_IN_VIEW}
         />
         {account && !adding && (
           <button type="button" className="add-place" onClick={() => { setSelectedId(null); setAdding(true) }}>
@@ -282,12 +283,19 @@ export default function App() {
           <p className="banner">Nothing mapped in this view yet.</p>
         )}
         {!error && bathrooms.length > 0 && (
-          <p className="banner banner-count">{placesInView(bathrooms.length)}</p>
+          <p className="banner banner-count">
+            {placesInView(bathrooms.length, bathrooms.length >= MAX_IN_VIEW)}
+          </p>
         )}
       </div>
 
       {asList && (
-        <PlaceList bathrooms={bathrooms} near={userLocation} onSelect={setSelectedId} />
+        <PlaceList
+          bathrooms={bathrooms}
+          near={userLocation}
+          onSelect={setSelectedId}
+          capped={bathrooms.length >= MAX_IN_VIEW}
+        />
       )}
 
       <MapView

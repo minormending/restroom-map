@@ -10,9 +10,16 @@ export function relativeDays(iso: string | null): string | null {
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
-/** How many places the current view and filters leave. Said the same way
- *  wherever it appears, which is now two places. */
-export const placesInView = (n: number): string => `${plural(n, 'place')} in view`
+/**
+ * How many places the current view and filters leave. Said the same way
+ * wherever it appears, which is now two places.
+ *
+ * `capped` when the server returned exactly as many as it was asked for: there
+ * are probably more, and "300 places in view" would be stating a limit as a
+ * count. Until the citywide import there were never 300 to hit.
+ */
+export const placesInView = (n: number, capped = false): string =>
+  capped ? `${n}+ places in view` : `${plural(n, 'place')} in view`
 
 /**
  * The sentence that makes a rotating-code database usable instead of harmful.

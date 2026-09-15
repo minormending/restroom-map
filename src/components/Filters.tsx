@@ -14,6 +14,8 @@ interface Props {
    *  data is unusable. This is the feedback for filtering, so it belongs with
    *  the controls rather than on the map behind them. */
   resultCount: number | null
+  /** True when the count is the query limit rather than a total. */
+  resultCapped: boolean
 }
 
 /**
@@ -41,7 +43,7 @@ function toggle<T>(set: Set<T>, value: T): Set<T> {
   return next
 }
 
-export default function FiltersPanel({ filters, onChange, open, onToggle, resultCount }: Props) {
+export default function FiltersPanel({ filters, onChange, open, onToggle, resultCount, resultCapped }: Props) {
   const count = filters.venues.size + filters.access.size + filters.needs.size
 
   return (
@@ -53,7 +55,7 @@ export default function FiltersPanel({ filters, onChange, open, onToggle, result
       {open && (
         <div className="filters-body">
           {resultCount !== null && (
-            <p className="filters-count" role="status">{placesInView(resultCount)}</p>
+            <p className="filters-count" role="status">{placesInView(resultCount, resultCapped)}</p>
           )}
 
           <fieldset>

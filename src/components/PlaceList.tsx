@@ -6,6 +6,7 @@ interface Props {
   bathrooms: Bathroom[]
   near: [number, number] | null
   onSelect: (id: string) => void
+  capped: boolean
 }
 
 /**
@@ -26,7 +27,7 @@ interface Props {
  * Nearest first when a position is known, because the list cannot show
  * proximity the way a map does and that is usually the question.
  */
-export default function PlaceList({ bathrooms, near, onSelect }: Props) {
+export default function PlaceList({ bathrooms, near, onSelect, capped }: Props) {
   const withDistance = bathrooms.map((b) => ({
     b,
     metres: near ? metresBetween(near, [b.lng, b.lat]) : null,
@@ -51,7 +52,7 @@ export default function PlaceList({ bathrooms, near, onSelect }: Props) {
           this: a screen reader user jumps by landmark and heading, and an
           unlabelled div is not somewhere you can jump to. The label carries
           the count, so arriving here tells you how much is here. */}
-      <p className="place-list-count">{placesInView(bathrooms.length)}</p>
+      <p className="place-list-count">{placesInView(bathrooms.length, capped)}</p>
       <ul>
         {withDistance.map(({ b, metres }) => {
           // Only what is settled. A list is a scanning surface, and "one
