@@ -33,6 +33,12 @@
      it look like one stack, and any change to the footer's font size or
      padding closes it into a real overlap. */
   --above-foot: calc(var(--foot-band) + 1rem);
+
+  /* Where the floating overlays start, which is under the top bar: its 0.75rem
+     offset, one control's height, and a gap. Named because two of them — the
+     banners and, on a phone, the filters panel — encode it, and because the
+     bar is not always one row tall. */
+  --below-bar: 3.6rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -323,7 +329,7 @@ button { font: inherit; color: inherit; }
 
 .banners {
   position: absolute;
-  top: 3.6rem;
+  top: var(--below-bar);
   left: 0.75rem;
   z-index: 9;
   display: flex;
@@ -1289,13 +1295,35 @@ button { font: inherit; color: inherit; }
      instead of to the button. */
   .filters-body {
     position: fixed;
-    top: 3.6rem;
+    top: var(--below-bar);
     left: 0.75rem;
     right: 0.75rem;
     width: auto;
   }
 
   .search { min-width: 0; }
+
+  /* Signed in, the bar carries one control more than it has room for: List,
+     Filters, "Add a place" and the account chip leave about 60px, and the rule
+     above lets the search box shrink into it rather than overflow. It rendered
+     as the word "Sea".
+
+     Give it its own line instead. The alternative was taking a label off
+     something — "Add a place" down to "Add" or an icon — which buys about 45px
+     and still leaves the placeholder clipped, at the cost of the one control
+     that tells a new contributor this app takes contributions.
+
+     Only with an account, because signed out there is one fewer button and the
+     single row fits. And only for the real search: while a place is being
+     added the box belongs to the panel, .add-place is gone, and this does not
+     match. */
+  .top-bar:has(.add-place) { flex-wrap: wrap; }
+  .top-bar:has(.add-place) .search { flex-basis: 100%; max-width: none; }
+
+  /* Two rows need twice the clearance. Without this the banners keep their
+     one-row offset and the button row lands on top of them — measured at 46px
+     of overlap, with the location hint legible between the buttons. */
+  .app:has(.top-bar .add-place) { --below-bar: 7rem; }
 
   .filters-toggle,
   .signin,
