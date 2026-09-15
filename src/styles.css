@@ -20,6 +20,19 @@
 
   --f-body: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* The strip along the bottom — legal links, "What is this?", the build tag —
+     sits 2.3rem up to clear the map attribution and runs about 1.65rem tall.
+     Two cards rise from the bottom edge and both have to clear that band;
+     naming it once stops them drifting from it, or from each other. */
+  --foot-band: 4rem;
+
+  /* Far enough above it to read as a gap. Both cards used to sit at 4.2rem,
+     which cleared the band by 0.275rem — four pixels, measured. That is a
+     hairline, not a separation: in a screenshot the card and the strip beneath
+     it look like one stack, and any change to the footer's font size or
+     padding closes it into a real overlap. */
+  --above-foot: calc(var(--foot-band) + 1rem);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -634,7 +647,7 @@ button { font: inherit; color: inherit; }
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 4.2rem;
+  bottom: var(--above-foot);
   z-index: 12;
   width: min(27rem, calc(100vw - 1.5rem));
   max-height: 70vh;
@@ -677,10 +690,9 @@ button { font: inherit; color: inherit; }
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  /* Clear of .legal-links, which sit at 2.3rem and are about 1.5rem tall. On a
-     phone this card is full-width, so "they do not overlap horizontally" is
-     not a defence. */
-  bottom: 4.2rem;
+  /* Clear of the footer strip. On a phone this card is full-width, so "they do
+     not overlap horizontally" is not a defence. */
+  bottom: var(--above-foot);
   z-index: 11;
   width: min(26rem, calc(100vw - 1.5rem));
   background: var(--surface);
