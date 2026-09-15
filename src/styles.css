@@ -399,6 +399,25 @@ button { font: inherit; color: inherit; }
   }
 }
 
+/* What you tap to get out. Sits under the sheet and over everything else.
+   Barely visible on purpose: dark enough to say the sheet is what has your
+   attention, light enough that the map behind it still reads as a map you
+   are coming back to.
+
+   Only where the sheet is a bottom sheet — see the 48rem rule below. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 19;
+  background: rgba(20, 32, 44, 0.28);
+}
+
+@media (min-width: 48rem) {
+  /* A panel down the side leaves the map usable beside it, and taking that
+     away would solve nothing: the close button is in view and so is Escape. */
+  .scrim { display: none; }
+}
+
 /* A 44px filled circle in the corner would be the heaviest thing in the
    header, so the ring stays 1.9rem and the pseudo-element is what a thumb
    hits. It is a child of the button, so the press still lands on it. */

@@ -42,6 +42,20 @@ export default function DetailSheet({
     sheet.current?.focus({ preventScroll: true })
   }, [bathroom.id])
 
+  /**
+   * Escape closes it. Obvious at a desk, and the reason this was missing: on a
+   * phone there is no Escape key, and on a phone this sheet covers 72% of the
+   * screen with exactly one way out of it — a ring in the corner that was
+   * 30px. The scrim below is the answer for a thumb; this is the answer for
+   * everybody driving from a keyboard, who otherwise has to tab through the
+   * whole sheet to reach the close button.
+   */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   const [localCode, setLocalCode] = useState<string | null>(null)
   const merged = { ...bathroom, ...detail, ...(localCode ? { code: localCode } : {}) }
   const confidence = confidenceLine(merged.confirms, merged.troubles, merged.last_confirmed)
@@ -55,84 +69,99 @@ export default function DetailSheet({
     `https://www.google.com/maps/dir/?api=1&destination=${merged.lat},${merged.lng}`
 
   return (
-    <aside
-      className="sheet"
-      aria-label={`Details for ${merged.name}`}
-      ref={sheet}
-      tabIndex={-1}
-    >
-      <button type="button" className="sheet-close" onClick={onClose} aria-label="Close details">
-        ×
-      </button>
+    <>
+      {/* Tapping away from a sheet is how a phone closes one, and this had no
+          such thing: no scrim, no swipe, no Escape, and a 30px ring in the
+          corner. A mis-tapped pin left you pixel-hunting.
 
-      <header className="sheet-head">
-        <span className="sheet-kind" style={{ color: accent }}>
-          {VENUE_LABELS[merged.venue_type]} · {ACCESS_LABELS[merged.access_kind]}
-        </span>
-        <h2>{merged.name}</h2>
-        {merged.address && <p className="sheet-addr">{merged.address}</p>}
-        {merged.operator && <p className="sheet-operator">Operated by {merged.operator}</p>}
-        <p className="sheet-go">
-          {away && <span className="distance">{away}</span>}
-          <a className="directions" href={directions} target="_blank" rel="noreferrer noopener">
-            Directions
-          </a>
-        </p>
-      </header>
+          Only below 48rem, where the sheet is a bottom sheet over most of the
+          screen. Wider, it is a panel down the side and the map beside it is
+          still yours to pan — a scrim there would take that away to solve a
+          problem that does not exist, since the close button is right there
+          and so is the Escape key.
 
-      <p className={`confidence tone-${confidence.tone}`}>{confidence.text}</p>
+          aria-hidden and not focusable: the close button and Escape are the
+          accessible ways out, and this must not become a stop on the way. */}
+      <div className="scrim" onClick={onClose} aria-hidden="true" />
+      <aside
+        className="sheet"
+        aria-label={`Details for ${merged.name}`}
+        ref={sheet}
+        tabIndex={-1}
+      >
+        <button type="button" className="sheet-close" onClick={onClose} aria-label="Close details">
+          ×
+        </button>
 
-      {merged.closed_in_winter && <p className={`seasonal tone-${season.tone}`}>{season.text}</p>}
+        <header className="sheet-head">
+          <span className="sheet-kind" style={{ color: accent }}>
+            {VENUE_LABELS[merged.venue_type]} · {ACCESS_LABELS[merged.access_kind]}
+          </span>
+          <h2>{merged.name}</h2>
+          {merged.address && <p className="sheet-addr">{merged.address}</p>}
+          {merged.operator && <p className="sheet-operator">Operated by {merged.operator}</p>}
+          <p className="sheet-go">
+            {away && <span className="distance">{away}</span>}
+            <a className="directions" href={directions} target="_blank" rel="noreferrer noopener">
+              Directions
+            </a>
+          </p>
+        </header>
 
-      {merged.access_kind === 'code_required' && (
-        <div className="code-block">
-          <span className="code-label">Door code</span>
-          {loading ? (
-            <span className="code-value is-pending">Checking…</span>
-          ) : merged.code ? (
-            <span className="code-value">{merged.code}</span>
-          ) : merged.code_locked ? (
-            <>
-              <span className="code-value is-locked" aria-label="Locked">••••</span>
-              <UnlockCode
+        <p className={`confidence tone-${confidence.tone}`}>{confidence.text}</p>
+
+        {merged.closed_in_winter && <p className={`seasonal tone-${season.tone}`}>{season.text}</p>}
+
+        {merged.access_kind === 'code_required' && (
+          <div className="code-block">
+            <span className="code-label">Door code</span>
+            {loading ? (
+              <span className="code-value is-pending">Checking…</span>
+            ) : merged.code ? (
+              <span className="code-value">{merged.code}</span>
+            ) : merged.code_locked ? (
+              <>
+                <span className="code-value is-locked" aria-label="Locked">••••</span>
+                <UnlockCode
+                  bathroomId={merged.id}
+                  cost={merged.code_cost ?? 2}
+                  account={account}
+                  onUnlocked={setLocalCode}
+                  onSpent={onSpent}
+                />
+              </>
+            ) : (
+              <span className="code-value is-empty">
+                Not recorded yet — there's a keypad, but nobody has added the code.
+              </span>
+            )}
+            {account && (
+              <CodeEditor
                 bathroomId={merged.id}
-                cost={merged.code_cost ?? 2}
-                account={account}
-                onUnlocked={setLocalCode}
-                onSpent={onSpent}
+                currentCode={merged.code ?? null}
+                onSaved={setLocalCode}
               />
-            </>
-          ) : (
-            <span className="code-value is-empty">
-              Not recorded yet — there's a keypad, but nobody has added the code.
-            </span>
-          )}
-          {account && (
-            <CodeEditor
-              bathroomId={merged.id}
-              currentCode={merged.code ?? null}
-              onSaved={setLocalCode}
-            />
-          )}
+            )}
+          </div>
+        )}
+
+        {merged.floor_hint && (
+          <p className="sheet-hint">
+            <span className="hint-label">Finding it</span>
+            {merged.floor_hint}
+          </p>
+        )}
+
+        <AccessDetail bathroom={merged} account={account} />
+
+        <ReportBox bathroom={merged} near={near} onReported={onReported} />
+
+        <Comments bathroomId={merged.id} account={account} />
+
+        <div className="sheet-foot">
+          <FlagLink bathroomId={merged.id} />
         </div>
-      )}
-
-      {merged.floor_hint && (
-        <p className="sheet-hint">
-          <span className="hint-label">Finding it</span>
-          {merged.floor_hint}
-        </p>
-      )}
-
-      <AccessDetail bathroom={merged} account={account} />
-
-      <ReportBox bathroom={merged} near={near} onReported={onReported} />
-
-      <Comments bathroomId={merged.id} account={account} />
-
-      <div className="sheet-foot">
-        <FlagLink bathroomId={merged.id} />
-      </div>
-    </aside>
+      </aside>
+    </>
   )
 }
