@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react'
 import { confidenceLine, describeDistance, metresBetween, seasonalLine } from '../lib/format'
 import { ACCESS_LABELS, VENUE_LABELS, type Bathroom } from '../lib/types'
 import { accessColor } from '../map/icons'
+import { useEscape } from '../lib/useEscape'
 
 interface Props {
   bathroom: Bathroom
@@ -42,19 +43,7 @@ export default function DetailSheet({
     sheet.current?.focus({ preventScroll: true })
   }, [bathroom.id])
 
-  /**
-   * Escape closes it. Obvious at a desk, and the reason this was missing: on a
-   * phone there is no Escape key, and on a phone this sheet covers 72% of the
-   * screen with exactly one way out of it — a ring in the corner that was
-   * 30px. The scrim below is the answer for a thumb; this is the answer for
-   * everybody driving from a keyboard, who otherwise has to tab through the
-   * whole sheet to reach the close button.
-   */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  useEscape(onClose)
 
   const [localCode, setLocalCode] = useState<string | null>(null)
   const merged = { ...bathroom, ...detail, ...(localCode ? { code: localCode } : {}) }

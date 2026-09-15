@@ -5,8 +5,8 @@ import AuthButton from './components/AuthButton'
 import DetailSheet from './components/DetailSheet'
 import NearbyPrompt from './components/NearbyPrompt'
 import PlaceList from './components/PlaceList'
-import BuildTag from './components/BuildTag'
 import Intro, { introSeen } from './components/Intro'
+import Menu from './components/Menu'
 import Profile from './components/Profile'
 import FiltersPanel from './components/Filters'
 import SearchBar from './components/SearchBar'
@@ -64,6 +64,7 @@ export default function App() {
   // canvas, and a canvas has nothing in it for a screen reader.
   const [asList, setAsList] = useState(false)
   const [intro, setIntro] = useState(() => !introSeen())
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const requestId = useRef(0)
 
@@ -328,16 +329,23 @@ export default function App() {
         <Profile account={account} onClose={() => setProfileOpen(false)} />
       )}
 
+      {/* One control where four used to sit. Privacy, Terms, "What is this?"
+          and the build number are all about the app rather than about a
+          bathroom, and a phone cannot spend a permanent row on things nobody
+          taps twice — least of all when there was nowhere left to put the one
+          people actually want, which is how to complain. */}
       <div className="page-foot">
-        <nav className="legal-links" aria-label="Site information">
-          <a href="privacy.html">Privacy</a>
-          <a href="terms.html">Terms</a>
-        </nav>
-        <button type="button" className="what-is-this" onClick={() => setIntro(true)}>
-          What is this?
+        <button type="button" className="menu-open" onClick={() => setMenuOpen(true)}>
+          Menu
         </button>
-        <BuildTag />
       </div>
+
+      {menuOpen && (
+        <Menu
+          onClose={() => setMenuOpen(false)}
+          onAbout={() => { setMenuOpen(false); setIntro(true) }}
+        />
+      )}
 
       {adding && <div className="crosshair" aria-hidden="true" />}
 

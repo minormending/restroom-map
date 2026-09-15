@@ -722,18 +722,6 @@ button { font: inherit; color: inherit; }
 .intro-note { color: var(--ink-3); font-size: 0.84rem !important; }
 .intro-go { width: 100%; margin-top: 0.2rem; }
 
-.what-is-this {
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  padding: 0.2rem 0.45rem;
-  font: inherit;
-  font-size: 0.75rem;
-  color: var(--ink-3);
-  cursor: pointer;
-}
-.what-is-this:hover { color: var(--accent); border-color: var(--accent); }
-
 /* ---------- the nearby prompt ---------- */
 
 /* Bottom-centre, where a thumb already is, and clear of the attribution strip.
@@ -1258,19 +1246,17 @@ button { font: inherit; color: inherit; }
   gap: 0.75rem;
 }
 
-.legal-links {
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.75rem;
-}
-/* Same size and weight as the legal links beside it — it is reference
+/* Same size and weight as the rest of the menu's footer — it is reference
    information, not a control anybody should be drawn to. It earns its place
    by being readable out loud when a page looks wrong. */
 .build-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch);
   background: var(--surface);
   border: 1px solid var(--rule);
   border-radius: 6px;
-  padding: 0.2rem 0.45rem;
+  padding: 0.2rem 0.6rem;
   font-family: var(--f-mono);
   font-size: 0.7rem;
   line-height: 1.4;
@@ -1280,16 +1266,46 @@ button { font: inherit; color: inherit; }
 .build-tag:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
 .build-tag:disabled { cursor: default; opacity: 0.7; }
 
-.legal-links a {
-  color: var(--ink-3);
-  text-decoration: none;
+/* The whole footer now. Sized for a thumb, unlike the four small chips it
+   replaced, none of which cleared 24px tall. */
+.menu-open {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch);
+  padding: 0 0.9rem;
   background: var(--surface);
   border: 1px solid var(--rule);
-  border-radius: 5px;
-  padding: 0.15rem 0.45rem;
-  opacity: 0.9;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-size: 0.83rem;
+  color: var(--ink-2);
+  cursor: pointer;
 }
-.legal-links a:hover { color: var(--accent); border-color: var(--accent); opacity: 1; }
+.menu-open:hover { color: var(--accent); border-color: var(--accent); }
+
+.menu-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  justify-content: center;
+  min-height: var(--touch);
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.menu-row:hover { border-color: var(--accent); }
+/* The reason the menu exists, so it does not look like the legal links. */
+.menu-row.is-primary { border-color: var(--accent); background: var(--accent-soft); }
+
+.menu-label { font-size: 0.92rem; font-weight: 500; }
+.menu-note { font-size: 0.8rem; color: var(--ink-3); }
+
+.menu-foot { display: flex; align-items: center; gap: 0.5rem; }
 
 /* The detail sheet covers the bottom-left on phones.
    This was written as `.sheet ~ .legal-links`, which could never match: `~`
