@@ -18,21 +18,30 @@
  */
 import { suite, eq, ok } from '../lib/testkit.mjs'
 
-/** Everything the function owns. A direct write to any of these is a bypass. */
-const CLOSED = ['bathrooms', 'bathroom_codes', 'reports', 'flags', 'feedback', 'access_claims']
+/**
+ * Tables the API roles may not write to.
+ *
+ * Six because a submit_* function owns them and a direct write would skip its
+ * limits. profiles for a different reason: it has no function in front of it,
+ * so there is no path to a display name at all — derived at signup and fixed
+ * after, until somebody adds set_display_name() and grants execute on that
+ * rather than putting the table grant back.
+ */
+const CLOSED = [
+  'bathrooms', 'bathroom_codes', 'reports', 'flags', 'feedback', 'access_claims',
+  'profiles',
+]
 
 /**
- * And the ones that are deliberately open, with the reason.
+ * And the one that is deliberately open, with the reason.
  *
- * comments is the only table the client writes to directly, so its policy is
- * doing the work. profiles has no function behind it at all — revoking would
- * leave a display name with no way to be edited, so it is a decision somebody
- * should make rather than a door to shut quietly.
+ * comments is the only table the client writes to directly — see
+ * lib/submissions.ts — so its policy is the access control rather than a
+ * decoration, and it is the only write grant left anywhere in public.
  */
 const OPEN = [
   ['comments', 'INSERT', 'the client inserts notes directly'],
   ['comments', 'DELETE', 'and deletes its own'],
-  ['profiles', 'UPDATE', 'no function behind it; display names would have no path'],
 ]
 
 const grants = (t, table) =>
