@@ -886,10 +886,16 @@ button { font: inherit; color: inherit; }
 }
 .flag-form label { color: var(--ink-3); }
 
+/* 34.70px before this. The .field rule that raised the rest of the sheet does
+   not reach here — these are not .field inputs — so the two forms tucked
+   inside the detail sheet kept the old size after everything around them
+   grew. The textarea already cleared it; the rule is shared, so it says so
+   once. */
 .flag-form textarea,
 .flag-form input {
   font: inherit;
   font-family: var(--f-body);
+  min-height: var(--touch);
   color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--rule);
@@ -1121,9 +1127,12 @@ button { font: inherit; color: inherit; }
 
 .code-edit { margin: 0.35rem 0 0; font-size: 0.81rem; }
 .code-form { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; }
+/* 34.78px before this, and it is the field somebody types a door code into
+   while standing at the door. */
 .code-form input {
   font-family: var(--f-mono);
   font-size: 1rem;
+  min-height: var(--touch);
   color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--rule);

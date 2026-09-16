@@ -73,6 +73,11 @@ const AT = { latitude: 40.705277, longitude: -74.005516, accuracy: 8 }
  * audit uses, for the same reason — most of this app has no URL of its own,
  * and a screenshot of the front door proves nothing about the screen you
  * changed.
+ *
+ * `show` scrolls something into view before the shot. The detail sheet is
+ * taller than a phone, so the two forms at the bottom of it are off-screen
+ * even once they are open, and a picture of the top of the sheet says nothing
+ * about them.
  */
 const STATES = {
   home: { do: ['.intro-go'] },
@@ -80,6 +85,22 @@ const STATES = {
   filters: { do: ['.intro-go', '.filters-toggle'] },
   list: { do: ['.intro-go', '.view-toggle'] },
   detail: { do: ['.intro-go', '.view-toggle', '.place-list li button'] },
+  // The two forms inside the detail sheet. Neither had a state until the
+  // inputs in them turned out to have been missed by a fix to everything
+  // around them — a screen nothing can photograph is a screen the next person
+  // changes blind.
+  'flag-form': {
+    do: ['.intro-go', '.view-toggle', '.place-list li button', '.flag-open'],
+    show: '.flag-form',
+  },
+  // Needs an account and a place with a code, so it is the one state that
+  // picks its row by name rather than taking the first.
+  'code-form': {
+    do: ['.intro-go', '.view-toggle',
+         '.place-list li:has-text("Park Bathroom") button', '.code-edit'],
+    show: '.code-form',
+    session: true,
+  },
   menu: { do: ['.intro-go', '.menu-open'] },
   feedback: { do: ['.intro-go', '.menu-open', '.menu-feedback'] },
   nearby: { do: ['.intro-go'], at: AT },
@@ -166,77 +187,93 @@ const taken = []
 
 for (const name of states) {
   const state = STATES[name]
-  const context = await browser.newContext({
-    viewport: { width, height },
-    deviceScaleFactor: 2,
-    // The tiles are the only thing here that comes off the network, and a
-    // screenshot run must not be able to reach anything real.
-    serviceWorkers: 'block',
-    ...(state.at ? { permissions: ['geolocation'], geolocation: state.at } : {}),
-  })
+  let context
+  try {
+    context = await browser.newContext({
+      viewport: { width, height },
+      deviceScaleFactor: 2,
+      // The tiles are the only thing here that comes off the network, and a
+      // screenshot run must not be able to reach anything real.
+      serviceWorkers: 'block',
+      ...(state.at ? { permissions: ['geolocation'], geolocation: state.at } : {}),
+    })
 
-  await context.route('**/*', (route) => {
-    const url = route.request().url()
-    if (url.startsWith(origin)) return route.continue()
-    if (url.includes('bathrooms_in_view')) {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: fixture })
+    await context.route('**/*', (route) => {
+      const url = route.request().url()
+      if (url.startsWith(origin)) return route.continue()
+      if (url.includes('bathrooms_in_view')) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: fixture })
+      }
+      if (url.includes('supabase.co')) {
+        return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+      }
+      // Tiles, fonts, anything else: refused rather than fetched.
+      return route.abort()
+    })
+
+    const page = await context.newPage()
+
+    await page.addInitScript((session) => {
+      try {
+        for (const [k, v] of Object.entries(session)) localStorage.setItem(k, v)
+      } catch { /* private mode */ }
+      const FIXED = new Date('2026-01-01T00:00:00Z').getTime()
+      Date.now = () => FIXED
+      const Real = Date
+      // eslint-disable-next-line no-global-assign
+      Date = class extends Real {
+        constructor(...a) { super(...(a.length ? a : [FIXED])) }
+        static now() { return FIXED }
+      }
+      let seed = 0x2f6e2b1
+      Math.random = () => {
+        seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5
+        return (seed >>> 0) / 0x100000000
+      }
+    }, state.session ? SESSION : {})
+
+    await page.goto(`${origin}${BASE}`, { waitUntil: 'load' })
+    await page.waitForSelector('.banner-count', { state: 'visible', timeout: 15_000 })
+
+    // Motion off before pressing anything: a control still easing into place is
+    // not stable, and a click that races a transition fails on a busy machine.
+    await page.addStyleTag({
+      content: `*, *::before, *::after {
+        animation-duration: 0s !important; transition-duration: 0s !important;
+        caret-color: transparent !important;
+      }`,
+    })
+    // The canvas never paints the same way twice — its tiles are refused above,
+    // so what is left is a grey rectangle that would only add noise to a diff.
+    await page.addStyleTag({ content: '.maplibregl-canvas { visibility: hidden !important; }' })
+
+    for (const step of state.do) {
+      if (typeof step === 'string') await page.locator(step).first().click({ timeout: 10_000 })
+      else await page.locator(step.fill).first().fill(step.text, { timeout: 10_000 })
     }
-    if (url.includes('supabase.co')) {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+
+    if (state.show) {
+      await page.locator(state.show).first()
+        .scrollIntoViewIfNeeded({ timeout: 10_000 })
     }
-    // Tiles, fonts, anything else: refused rather than fetched.
-    return route.abort()
-  })
 
-  const page = await context.newPage()
+    await page.evaluate(() => document.fonts.ready)
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
 
-  await page.addInitScript((session) => {
-    try {
-      for (const [k, v] of Object.entries(session)) localStorage.setItem(k, v)
-    } catch { /* private mode */ }
-    const FIXED = new Date('2026-01-01T00:00:00Z').getTime()
-    Date.now = () => FIXED
-    const Real = Date
-    // eslint-disable-next-line no-global-assign
-    Date = class extends Real {
-      constructor(...a) { super(...(a.length ? a : [FIXED])) }
-      static now() { return FIXED }
-    }
-    let seed = 0x2f6e2b1
-    Math.random = () => {
-      seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5
-      return (seed >>> 0) / 0x100000000
-    }
-  }, state.session ? SESSION : {})
-
-  await page.goto(`${origin}${BASE}`, { waitUntil: 'load' })
-  await page.waitForSelector('.banner-count', { state: 'visible', timeout: 15_000 })
-
-  // Motion off before pressing anything: a control still easing into place is
-  // not stable, and a click that races a transition fails on a busy machine.
-  await page.addStyleTag({
-    content: `*, *::before, *::after {
-      animation-duration: 0s !important; transition-duration: 0s !important;
-      caret-color: transparent !important;
-    }`,
-  })
-  // The canvas never paints the same way twice — its tiles are refused above,
-  // so what is left is a grey rectangle that would only add noise to a diff.
-  await page.addStyleTag({ content: '.maplibregl-canvas { visibility: hidden !important; }' })
-
-  for (const step of state.do) {
-    if (typeof step === 'string') await page.locator(step).first().click({ timeout: 10_000 })
-    else await page.locator(step.fill).first().fill(step.text, { timeout: 10_000 })
+      const file = join(outDir, `${name}.png`)
+      await page.screenshot({ path: file, fullPage: false })
+      taken.push(name)
+      console.log(`  ${name}`)
+  
+  } catch (err) {
+    // One state failing is not the run failing. A "before" capture against
+    // an older commit legitimately cannot reach a screen that did not exist
+    // yet, and pr-shots renders a missing before as "new" rather than
+    // pretending there was nothing to compare.
+    console.log(`  ${name} — skipped: ${String(err.message).split('\n')[0]}`)
+  } finally {
+    await context?.close()
   }
-
-  await page.evaluate(() => document.fonts.ready)
-  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
-
-  const file = join(outDir, `${name}.png`)
-  await page.screenshot({ path: file, fullPage: false })
-  taken.push(name)
-  console.log(`  ${name}`)
-  await context.close()
 }
 
 await browser.close()
