@@ -85,7 +85,10 @@ console.log(`\n=== before: ${base} ===`)
  */
 const HARNESS = ['scripts/shots.mjs', 'scripts/lib/connect.mjs',
                  'fixtures/bathrooms-in-view.json']
-const carried = HARNESS.map((f) => [f, readFileSync(join(ROOT, f))])
+// From the base, not the working tree: the instrument belongs to main, so a
+// branch cannot change it and measure itself with the changed version.
+const carried = HARNESS.map((f) => [f,
+  execFileSync('git', ['show', `${base}:${f}`], { cwd: ROOT, maxBuffer: 1 << 24 })])
 
 // Detached, so the branch ref is untouched. Restored in the finally below
 // even if a capture throws.
