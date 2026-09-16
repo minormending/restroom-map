@@ -80,19 +80,20 @@ console.log(`\n=== before: ${base} ===`)
  *
  * `git checkout main` would take this branch's version of the harness away
  * with it, and on a base predating the harness there would be nothing to run
- * at all. Worse: a branch that *changes* shots.mjs would measure its "before"
- * with the old capture logic and its "after" with the new one, and the
- * difference in the pictures would be the instrument rather than the app.
- *
- * So the harness is carried across, written into the checked-out tree, and
+ * at all. So it is carried across, written into the checked-out tree, and
  * removed again before switching back.
+ *
+ * FROM THE BRANCH, NOT THE BASE — and the first version of this had it the
+ * other way round, reasoning that a branch should not be able to change its
+ * own measuring device. That was wrong twice over. What matters is that the
+ * instrument is *constant across the comparison*, which it is either way; and
+ * taking it from the base makes it impossible for a branch to add a state,
+ * because the base has never heard of it. This branch added two, for the two
+ * forms whose inputs a fix to everything around them had missed.
  */
 const HARNESS = ['scripts/shots.mjs', 'scripts/lib/connect.mjs',
                  'fixtures/bathrooms-in-view.json']
-// From the base, not the working tree: the instrument belongs to main, so a
-// branch cannot change it and measure itself with the changed version.
-const carried = HARNESS.map((f) => [f,
-  execFileSync('git', ['show', `${base}:${f}`], { cwd: ROOT, maxBuffer: 1 << 24 })])
+const carried = HARNESS.map((f) => [f, readFileSync(join(ROOT, f))])
 
 // Detached, so the branch ref is untouched. Restored in the finally below
 // even if a capture throws.
