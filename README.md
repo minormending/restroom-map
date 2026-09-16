@@ -380,7 +380,8 @@ OSM. Those can only be walked to.
 
 ## Still to settle before this goes public
 
-Ordered by what actually stops a launch, not by how much work each is.
+Ordered by what actually stops a launch, not by how much work each is. Two of
+these need a person to walk somewhere; the rest need a decision or a payment.
 
 - **Neither legal page has been reviewed by a lawyer.** The placeholders are
   filled and governing law is New York, and both pages still carry a banner
@@ -401,9 +402,13 @@ Ordered by what actually stops a launch, not by how much work each is.
   The six are an adult changing bench, grab bars, turning space, whether the
   accessible stall is locked, a sink in the cubicle, a shelf. No dataset
   anywhere carries them — not NYC, not Parks, not Refuge, not OSM — which is
-  the reason this project exists and the reason importing cannot fix it. The
-  count has gone 84 → 1,038 → 1,038 across three imports and a day of work,
-  and the number that matters has been zero throughout.
+  the reason this project exists and the reason importing cannot fix it.
+
+  794 rows do carry a wheelchair yes/no from their source, so the map is not
+  empty. It is empty on exactly the fields that make it different from the maps
+  that already exist. The place count has gone 84 → 1,038 across three imports;
+  the number under it has been zero the whole time, and no amount of work in
+  this repo moves it.
 
   A promise with nothing behind it is worse than no promise. It wants about a
   dozen places filled in before anybody is invited.
@@ -418,30 +423,45 @@ Ordered by what actually stops a launch, not by how much work each is.
   pin used to live on a canvas and the accessibility tree held no places at
   all, so a screen reader user could filter and be handed nothing; there is a
   list view now, it is keyboard reachable, sheets take focus and announce
-  themselves, every control clears 44px, and 456 automated checks pass across
-  three widths.
+  themselves, controls in a sheet clear 44px, and the accessibility, layout and
+  health checks pass across thirteen screens at three widths.
 
   None of that is the same as somebody actually using it. Structure was
   verified; experience was not. For a project positioned on disability, one
-  real session before launch protects more than it costs.
+  real session before launch protects more than it costs — and it is the same
+  errand as the item above, because both need a person in a room with the app
+  rather than another commit.
 
-- **The sign-in screen says `supabase.co`, not Restroom Map.** Google's consent
-  screen reads "to continue to zfxrhykegdilxssghmyf.supabase.co". The privacy
-  and terms links on it are correct, so the branding config saved — it is the
-  name a person reads that is wrong, and on a page asking for a Google password
-  an unrecognisable hostname reads as phishing.
+- **The sign-in screen says `supabase.co`, not Restroom Map.** Diagnosed and
+  mitigated; not fixed. Google's consent screen reads "to continue to
+  zfxrhykegdilxssghmyf.supabase.co", and on a page asking for a Google password
+  an unrecognisable hostname reads as phishing. Contributing requires an
+  account, so this screen stands between the project and the only mechanism by
+  which it gets the data the item above is about.
 
-  Contributing requires an account, so this screen stands between the project
-  and the only mechanism by which it gets the data the item above is about.
-  Check **App name** under Google Auth Platform → Branding first; Google falls
-  back to the callback host when it is blank. If it is set, this is the shape
-  of Supabase's hosted auth and the fix is a paid custom domain — a cost
-  decision rather than a configuration one.
+  **App name is set** — that was the obvious guess and it was wrong. Google
+  shows the name only when the callback host sits on a domain the project has
+  verified, and `supabase.co` belongs to Supabase, not to us. The fix is a
+  custom auth domain: a domain this project does not own, on a paid plan, with
+  a paid add-on on top. A cost decision, not a configuration one.
+
+  Until somebody makes it, the app says the host one step early — a short
+  warning before the redirect naming what Google is about to name, and saying
+  it is this map's database. That is a mitigation, not a fix, and it costs a
+  tap on the flow this project most needs people to finish.
 
 - **Correcting a settled fact has no design.** Claims are fill-only: once a
   field is settled, further claims are refused. A hoist that gets removed, or
   an import that was wrong, stays until somebody edits the database by hand.
   Fine while the map is small and a real problem before it is not.
+
+- **Nothing reports a failure except a person choosing to.** No analytics, no
+  error reporting, no crash channel — deliberate, and the privacy page promises
+  it. The consequence is that the feedback form is the whole signal, and the
+  form lives in the menu: a render error that blanks the page takes the way to
+  report it down with it. Somebody's phone showing white is invisible here.
+  The smallest honest repair is an error boundary that outlives the app and
+  offers the form, not a tracking script.
 
 - **Google sign-in depends on a second repo.**
   [minormending.github.io](https://github.com/minormending/minormending.github.io)
@@ -455,9 +475,11 @@ Ordered by what actually stops a launch, not by how much work each is.
   them: tiles come back from the service worker cache, so a first-ever visit
   with no signal draws pins on blank grey rather than on streets.
 
-- **Whether to seed from OpenStreetMap at all.** ODbL has share-alike
-  provisions on derived databases. Imports stay separable — every imported row
-  records `import_source`, `import_id` and `import_licence`, so withdrawing one
-  source is a single delete, and the licence travels with the rows it governs
-  rather than living in somebody's memory. Decide before the first import, not
-  after.
+- **Whether to seed from OpenStreetMap at all.** None of the three imports so
+  far is OSM — NYC Open Data, NYC Parks and Refuge Restrooms are all permissive
+  — so this decision is still ahead of the import it governs, which is where it
+  belongs. ODbL has share-alike provisions on derived databases. Imports stay
+  separable: every imported row records `import_source`, `import_id` and
+  `import_licence`, so withdrawing one source is a single delete and the
+  licence travels with the rows it governs rather than living in somebody's
+  memory. Decide before that import, not after.
