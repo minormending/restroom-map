@@ -1,0 +1,46 @@
+name: CI
+
+# Nothing ran on a pull request until now. The deploy workflow only fires on
+# push to main, which means every check this project has happened *after* the
+# decision to merge — the point at which a failure is a revert rather than a
+# conversation.
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      - run: pnpm lint
+
+      # The same build Pages gets, so a bundle that cannot be produced fails
+      # here rather than after somebody merges it. BASE_PATH is derived the
+      # same way deploy.yml derives it, and the Supabase values are the public
+      # ones — a build needs them present, not valid.
+      - name: Build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+        run: pnpm build
+
+# NOT the database suite. It needs SUPABASE_DB_PASSWORD, which is full access
+# that bypasses RLS, and it points at the one live database — every test rolls
+# back, but handing that secret to a workflow any fork can trigger is a
+# different risk from running it from a laptop. `pnpm test` stays a local gate.
