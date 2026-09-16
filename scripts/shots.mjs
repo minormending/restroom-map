@@ -73,6 +73,11 @@ const AT = { latitude: 40.705277, longitude: -74.005516, accuracy: 8 }
  * audit uses, for the same reason — most of this app has no URL of its own,
  * and a screenshot of the front door proves nothing about the screen you
  * changed.
+ *
+ * `show` scrolls something into view before the shot. The detail sheet is
+ * taller than a phone, so the two forms at the bottom of it are off-screen
+ * even once they are open, and a picture of the top of the sheet says nothing
+ * about them.
  */
 const STATES = {
   home: { do: ['.intro-go'] },
@@ -80,6 +85,22 @@ const STATES = {
   filters: { do: ['.intro-go', '.filters-toggle'] },
   list: { do: ['.intro-go', '.view-toggle'] },
   detail: { do: ['.intro-go', '.view-toggle', '.place-list li button'] },
+  // The two forms inside the detail sheet. Neither had a state until the
+  // inputs in them turned out to have been missed by a fix to everything
+  // around them — a screen nothing can photograph is a screen the next person
+  // changes blind.
+  'flag-form': {
+    do: ['.intro-go', '.view-toggle', '.place-list li button', '.flag-open'],
+    show: '.flag-form',
+  },
+  // Needs an account and a place with a code, so it is the one state that
+  // picks its row by name rather than taking the first.
+  'code-form': {
+    do: ['.intro-go', '.view-toggle',
+         '.place-list li:has-text("Park Bathroom") button', '.code-edit'],
+    show: '.code-form',
+    session: true,
+  },
   menu: { do: ['.intro-go', '.menu-open'] },
   feedback: { do: ['.intro-go', '.menu-open', '.menu-feedback'] },
   nearby: { do: ['.intro-go'], at: AT },
@@ -227,6 +248,11 @@ for (const name of states) {
   for (const step of state.do) {
     if (typeof step === 'string') await page.locator(step).first().click({ timeout: 10_000 })
     else await page.locator(step.fill).first().fill(step.text, { timeout: 10_000 })
+  }
+
+  if (state.show) {
+    await page.locator(state.show).first()
+      .scrollIntoViewIfNeeded({ timeout: 10_000 })
   }
 
   await page.evaluate(() => document.fonts.ready)
