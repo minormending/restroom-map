@@ -256,6 +256,16 @@ later.
 Business removal requests arrive through the same queue and sort to the top —
 `awaiting_reply` marks anything with a contact address on it.
 
+## Documentation
+
+[`docs/`](docs/) is the long form: the system shape, the data model, how
+something becomes a fact, who may write what, and the front end. Written for
+somebody who has not seen this before, with the deeper detail folded into
+"Advanced" blocks.
+
+Start at [docs/README.md](docs/README.md). [docs/trust.md](docs/trust.md) is
+the one to read before changing anything.
+
 ## Importing
 
 ### NYC Open Data, "Public Restrooms"
