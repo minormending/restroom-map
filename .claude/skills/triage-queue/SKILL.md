@@ -57,6 +57,7 @@ Branch: `fix/<short-slug>`. PR body must contain:
 - how you reproduced it, concretely — the width, the steps, what you saw
 - what was wrong and why
 - how you verified the fix, with numbers where there are numbers
+- **before and after pictures**, if anything visual changed — see below
 - anything you found and deliberately did not fix
 
 ## Feature requests
@@ -86,6 +87,32 @@ with the same body requirements as a bug plus an explicit note of what it does
 If any fails: draft the decline. Be specific about which of the three and why —
 "we cannot source that data" is a real answer and a useful one; "out of scope"
 is neither.
+
+## Pictures
+
+A reviewer looking at a CSS diff cannot tell whether it is right. Before you
+open the PR, with the branch committed and the tree clean:
+
+```bash
+node scripts/pr-shots.mjs            # every state
+node scripts/pr-shots.mjs menu add   # or just the ones you touched
+```
+
+It captures your branch, checks out the base for the same states, keeps only
+the pairs that actually differ, publishes them to the `pr-shots` branch and
+prints a markdown table. Paste that into the PR body.
+
+Two things it tells you that are worth reading rather than skipping:
+
+- **"Nothing visual to show."** Say so in the PR. A change that was supposed to
+  move something and moved nothing is a finding, not a formality.
+- **A state changed that you did not touch.** That is the whole reason to run
+  it over more than the obvious screen. Explain it or fix it; do not paste it
+  silently.
+
+The states are listed in `scripts/shots.mjs`. If you fixed something on a
+screen that has no state there, add one in the same PR — a screen nothing can
+photograph is a screen the next person changes blind.
 
 ## Replies
 
