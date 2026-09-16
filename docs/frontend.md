@@ -156,11 +156,19 @@ refocuses when `bathroom.id` changes — tapping a second pin while the first is
 open must re-announce — which is a different effect from focusing once on
 mount.
 
-**Touch targets.** Every control in a sheet clears 44px. That was not free:
-they were 19–37px and nothing flagged them, because WCAG 2.2 AA asks 24 and
-they all cleared it. 24 is the accessibility floor; Apple asks 44 and Android
-48. The close ring keeps its 1.9rem look and grows a pseudo-element instead —
-a 44px filled circle would be the heaviest thing in the header.
+**Touch targets.** Controls in a sheet clear 44px — `--touch`. That was not
+free: they were 19–37px and nothing flagged them, because WCAG 2.2 AA asks 24
+and they all cleared it. 24 is the accessibility floor; Apple asks 44 and
+Android 48. The close ring keeps its 1.9rem look and grows a pseudo-element
+instead — a 44px filled circle would be the heaviest thing in the header, and
+"move" and "edit the code" are sized the same way, because both sit inline in
+a sentence.
+
+This read "every control in a sheet" for a while and was not true. The detail
+sheet was done first and the add-a-place sheet was missed entirely, at
+37–39px, which was the contribution path. Two inputs are still under:
+`.code-form input` and `.flag-form input`, both 35px, both in the detail
+sheet. Measure before repeating the claim.
 
 </details>
 
