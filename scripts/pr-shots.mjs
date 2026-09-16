@@ -32,7 +32,7 @@ import {
   mkdtempSync, readdirSync, readFileSync, writeFileSync, cpSync, mkdirSync, rmSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
 import { createHash } from 'node:crypto'
 import { ROOT } from './lib/connect.mjs'
 
@@ -70,13 +70,37 @@ console.log(`\n=== after: ${branch} ===`)
 capture(afterDir)
 
 console.log(`\n=== before: ${base} ===`)
-// Detached, so the branch ref is untouched and there is nothing to clean up
-// beyond going back. Restored in the finally below even if a capture throws.
+
+/**
+ * The same instrument on both sides.
+ *
+ * `git checkout main` would take this branch's version of the harness away
+ * with it, and on a base predating the harness there would be nothing to run
+ * at all. Worse: a branch that *changes* shots.mjs would measure its "before"
+ * with the old capture logic and its "after" with the new one, and the
+ * difference in the pictures would be the instrument rather than the app.
+ *
+ * So the harness is carried across, written into the checked-out tree, and
+ * removed again before switching back.
+ */
+const HARNESS = ['scripts/shots.mjs', 'scripts/lib/connect.mjs',
+                 'fixtures/bathrooms-in-view.json']
+const carried = HARNESS.map((f) => [f, readFileSync(join(ROOT, f))])
+
+// Detached, so the branch ref is untouched. Restored in the finally below
+// even if a capture throws.
 const head = git('rev-parse', 'HEAD')
 try {
   git('checkout', '--detach', base)
+  for (const [f, body] of carried) {
+    mkdirSync(join(ROOT, dirname(f)), { recursive: true })
+    writeFileSync(join(ROOT, f), body)
+  }
   capture(beforeDir)
 } finally {
+  // Whatever the base tracked comes back; whatever it did not, goes.
+  git('checkout', '--', '.')
+  execFileSync('git', ['clean', '-fdq', 'scripts', 'fixtures'], { cwd: ROOT })
   git('checkout', '--detach', head)
   git('checkout', branch)
 }
