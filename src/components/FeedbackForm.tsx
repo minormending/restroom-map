@@ -87,7 +87,7 @@ export default function FeedbackForm() {
       </label>
 
       <label className="field">
-        <span>Your email <em>only if you want a reply</em></span>
+        <span>Your email <em>(only if you want a reply)</em></span>
         <input
           type="email"
           value={email}
