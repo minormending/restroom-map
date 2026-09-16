@@ -264,7 +264,9 @@ somebody who has not seen this before, with the deeper detail folded into
 "Advanced" blocks.
 
 Start at [docs/README.md](docs/README.md). [docs/trust.md](docs/trust.md) is
-the one to read before changing anything.
+the one to read before changing anything, and
+[docs/triage.md](docs/triage.md) is what happens to a complaint after somebody
+sends one.
 
 ## Importing
 
