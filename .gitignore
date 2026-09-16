@@ -30,3 +30,6 @@ dist-ssr
 # Build output
 dist
 dev-dist
+
+# Screenshots are built, not kept — see scripts/shots.mjs
+shots/
