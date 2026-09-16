@@ -766,8 +766,16 @@ button { font: inherit; color: inherit; }
 
 .nearby-actions .report-btn { flex: 1 1 auto; }
 
+/* 36px beside two 44px buttons, and it is the dismiss — the one somebody in a
+   hurry reaches for, and the only one here that is safe to get wrong. It keeps
+   its quiet look: underlined text, no border, no fill. Only the box is taller,
+   and .nearby-actions centres on the cross axis, so the row does not grow. */
 .nearby-dismiss {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch);
   background: none;
   border: none;
   padding: 0.5rem 0.4rem;
