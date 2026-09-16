@@ -101,6 +101,46 @@ stuck rather than retried forever.
 
 </details>
 
+## Pictures in the pull request
+
+A reviewer looking at a CSS diff cannot tell whether it is right, so a triage
+PR carries before-and-after images.
+
+```bash
+node scripts/shots.mjs        # eleven named states, to shots/
+node scripts/pr-shots.mjs     # the same, before and after, published
+```
+
+`shots.mjs` builds against a fixture host that does not exist and answers or
+refuses every request, so a screenshot run cannot reach the live map or the
+real database. It reaches the four states behind sign-in or a location fix the
+same way the audit does — a fabricated session, a fixed geolocation, a list of
+clicks.
+
+`pr-shots.mjs` captures the branch, checks out the base to capture the same
+states again, hashes the pairs and keeps only what changed.
+
+<details>
+<summary><b>Advanced</b> — two things that are easy to get wrong here</summary>
+
+**The instrument has to be the same on both sides.** `git checkout main` takes
+the branch's copy of the harness with it, so the first real run died with
+MODULE_NOT_FOUND on a branch that predated it. Worse than the crash is the
+silent case: a branch that *edits* `shots.mjs` would measure its before with
+one capture logic and its after with another, and the difference in the
+pictures would be the tooling rather than the app. The harness is read with
+`git show <base>:<path>` and written into whichever tree is checked out.
+
+**GitHub has no API for attaching an image to a pull request** — the web UI
+does it by hand. So the images go on an orphan branch, `pr-shots`, and are
+linked by raw URL. An orphan shares no history with main, so nothing binary
+can end up in the tree somebody clones. It only works because this repo is
+public: `raw.githubusercontent.com` will not serve a private one to a
+logged-out reader, and a PR body full of broken images is worse than one with
+no images.
+
+</details>
+
 ## What it produces
 
 A short report — what was open, what was acted on, what was not and why — then
