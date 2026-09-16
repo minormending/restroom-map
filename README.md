@@ -376,10 +376,6 @@ Ordered by what actually stops a launch, not by how much work each is.
   legally sufficient. That banner is deliberate and should stay until somebody
   qualified has read them. This is the only item here that is a hard no.
 
-  Both Contact sections still name only the issue tracker. There is a feedback
-  form in the menu now, and for most people it is the better route — it takes
-  an optional address privately instead of asking them to post in public.
-
 - **The map cannot yet answer the question it now asks.** The front page
   promises to say whether a restroom will work for you. Today:
 
@@ -434,13 +430,6 @@ Ordered by what actually stops a launch, not by how much work each is.
   field is settled, further claims are refused. A hoist that gets removed, or
   an import that was wrong, stays until somebody edits the database by hand.
   Fine while the map is small and a real problem before it is not.
-
-- **Deletion requests still arrive in public.** The privacy page routes them to
-  the issue tracker, tells people not to post an email address there, and warns
-  that identifying the account happens on the issue. It works, and it is now
-  the harder of two available paths: the feedback form takes a message and an
-  optional address, neither of which is public, and lands in the same queue.
-  Swapping it is a paragraph and two links.
 
 - **Google sign-in depends on a second repo.**
   [minormending.github.io](https://github.com/minormending/minormending.github.io)
