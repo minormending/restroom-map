@@ -371,24 +371,34 @@ OSM. Those can only be walked to.
 Ordered by what actually stops a launch, not by how much work each is.
 
 - **Neither legal page has been reviewed by a lawyer.** The placeholders are
-  filled — contact is the GitHub issue tracker, governing law is New York — and
-  both pages still carry a banner saying they describe this system accurately,
-  which is not the same as being legally sufficient. That banner is deliberate
-  and should stay until somebody qualified has read them. This is the only item
-  here that is a hard no.
+  filled and governing law is New York, and both pages still carry a banner
+  saying they describe this system accurately, which is not the same as being
+  legally sufficient. That banner is deliberate and should stay until somebody
+  qualified has read them. This is the only item here that is a hard no.
+
+  Both Contact sections still name only the issue tracker. There is a feedback
+  form in the menu now, and for most people it is the better route — it takes
+  an optional address privately instead of asking them to post in public.
 
 - **The map cannot yet answer the question it now asks.** The front page
-  promises to say whether a restroom will work for you. Today: 1,038 places,
-  and **zero** of them record an adult changing bench, grab bars, turning
-  space, whether the accessible stall is locked, a sink in the cubicle or a
-  shelf. Zero claims, one account, one confirmation.
+  promises to say whether a restroom will work for you. Today:
 
-  Importing more places does not move this. It has gone from 84 to 1,038 and
-  the number that matters is still zero.
+  | | |
+  | --- | --- |
+  | places | 1,038 |
+  | recording any of the six | **0** |
+  | claims | 0 |
+  | accounts | 1 |
 
-  That gap is the reason the project exists — nobody else records this — but a
-  promise with nothing behind it is worse than no promise. It wants a dozen
-  places filled in before anybody is invited.
+  The six are an adult changing bench, grab bars, turning space, whether the
+  accessible stall is locked, a sink in the cubicle, a shelf. No dataset
+  anywhere carries them — not NYC, not Parks, not Refuge, not OSM — which is
+  the reason this project exists and the reason importing cannot fix it. The
+  count has gone 84 → 1,038 → 1,038 across three imports and a day of work,
+  and the number that matters has been zero throughout.
+
+  A promise with nothing behind it is worse than no promise. It wants about a
+  dozen places filled in before anybody is invited.
 
   **Bootstrapping needs two people, not one.** A claim is shown as fact only
   once two people independently agree, which is the right rule and makes the
@@ -396,11 +406,12 @@ Ordered by what actually stops a launch, not by how much work each is.
   their answer sit as "on one person's word" until somebody else visits the
   same restroom. Walk the first dozen with somebody else, not alone.
 
-- **Nobody disabled has used this.** The structural blocker is gone — until
-  recently every pin lived on a canvas and the accessibility tree held no
-  places at all, so a screen reader user could filter and be handed nothing.
-  There is a list view now, it is keyboard reachable, the sheet takes focus and
-  announces itself, and the automated suite passes.
+- **Nobody disabled has used this.** The structural blockers are gone. Every
+  pin used to live on a canvas and the accessibility tree held no places at
+  all, so a screen reader user could filter and be handed nothing; there is a
+  list view now, it is keyboard reachable, sheets take focus and announce
+  themselves, every control clears 44px, and 456 automated checks pass across
+  three widths.
 
   None of that is the same as somebody actually using it. Structure was
   verified; experience was not. For a project positioned on disability, one
@@ -412,11 +423,11 @@ Ordered by what actually stops a launch, not by how much work each is.
   name a person reads that is wrong, and on a page asking for a Google password
   an unrecognisable hostname reads as phishing.
 
-  This costs more than it used to. Contributing requires an account, so this
-  screen now stands between the project and the only mechanism by which it gets
-  data. Check **App name** under Google Auth Platform → Branding first; Google
-  falls back to the callback host when it is blank. If it is set, this is the
-  shape of Supabase's hosted auth and the fix is a paid custom domain — a cost
+  Contributing requires an account, so this screen stands between the project
+  and the only mechanism by which it gets the data the item above is about.
+  Check **App name** under Google Auth Platform → Branding first; Google falls
+  back to the callback host when it is blank. If it is set, this is the shape
+  of Supabase's hosted auth and the fix is a paid custom domain — a cost
   decision rather than a configuration one.
 
 - **Correcting a settled fact has no design.** Claims are fill-only: once a
@@ -424,10 +435,12 @@ Ordered by what actually stops a launch, not by how much work each is.
   an import that was wrong, stays until somebody edits the database by hand.
   Fine while the map is small and a real problem before it is not.
 
-- **Deletion requests arrive in public.** The privacy page routes them to the
-  issue tracker, tells people not to post an email address there, and warns
-  that identifying the account happens on the issue. It works. A private
-  address would work better, and swapping it is two links and a paragraph.
+- **Deletion requests still arrive in public.** The privacy page routes them to
+  the issue tracker, tells people not to post an email address there, and warns
+  that identifying the account happens on the issue. It works, and it is now
+  the harder of two available paths: the feedback form takes a message and an
+  optional address, neither of which is public, and lands in the same queue.
+  Swapping it is a paragraph and two links.
 
 - **Google sign-in depends on a second repo.**
   [minormending.github.io](https://github.com/minormending/minormending.github.io)
