@@ -974,7 +974,32 @@ button { font: inherit; color: inherit; }
   box-shadow: var(--shadow);
   padding: 0.25rem;
 }
-.account-menu button {
+/* Wider than the account menu, because it is prose rather than a list of
+   verbs, and pinned to the right edge of the bar so it does not run off a
+   375px screen. */
+.signin-warn {
+  width: min(19rem, calc(100vw - 1.5rem));
+  padding: 0.7rem 0.8rem;
+}
+.signin-warn p { margin: 0 0 0.5rem; font-size: 0.86rem; line-height: 1.45; }
+/* Its own line, and its own sentence. At 375px the host is longer than what
+   is left on any line of a sentence wrapped around it, and breaking a
+   hostname mid-token is exactly the thing somebody is being asked to
+   recognise. */
+.signin-warn-host {
+  font-family: var(--f-mono);
+  font-size: 0.82rem !important;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
+.signin-warn-note { color: var(--ink-3); font-size: 0.8rem !important; }
+.signin-warn-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+.signin-warn-actions button { width: auto; min-height: var(--touch); }
+
+/* Direct children only. These rules strip a button back to a menu row, and
+   they out-specify .btn-primary — which rendered the warning's Continue as
+   white text on a white card, invisible and unclickable-looking. */
+.account-menu > button {
   background: none;
   border: none;
   padding: 0.4rem 0.8rem;
@@ -984,7 +1009,7 @@ button { font: inherit; color: inherit; }
   width: 100%;
   text-align: left;
 }
-.account-menu button:hover { background: var(--surface-alt); }
+.account-menu > button:hover { background: var(--surface-alt); }
 
 .account-error {
   position: absolute;

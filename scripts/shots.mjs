@@ -101,10 +101,15 @@ const STATES = {
     show: '.code-form',
     session: true,
   },
+  // What somebody sees a second before Google names a host they do not know.
+  'sign-in-warning': { do: ['.intro-go', '.signin'] },
   menu: { do: ['.intro-go', '.menu-open'] },
   feedback: { do: ['.intro-go', '.menu-open', '.menu-feedback'] },
   nearby: { do: ['.intro-go'], at: AT },
   'signed-in': { do: ['.intro-go'], session: true },
+  // The other thing .account-menu styles, so a change to one is checked
+  // against the other.
+  'account-menu': { do: ['.intro-go', '.account-chip'], session: true },
   add: { do: ['.intro-go', '.add-place'], session: true },
   'add-describe': {
     do: ['.intro-go', '.add-place', '.placing-actions .btn-primary'],
@@ -203,6 +208,16 @@ for (const name of states) {
       if (url.startsWith(origin)) return route.continue()
       if (url.includes('bathrooms_in_view')) {
         return route.fulfill({ status: 200, contentType: 'application/json', body: fixture })
+      }
+      // Sign-in asks this before redirecting, and treats anything not shaped
+      // like the real reply as "Google sign-in isn't switched on". Without it
+      // the before-shot of any sign-in state is that error rather than the
+      // screen somebody actually meets.
+      if (url.includes('/auth/v1/settings')) {
+        return route.fulfill({
+          status: 200, contentType: 'application/json',
+          body: JSON.stringify({ external: { google: true } }),
+        })
       }
       if (url.includes('supabase.co')) {
         return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
