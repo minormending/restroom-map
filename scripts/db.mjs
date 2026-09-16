@@ -11,6 +11,8 @@
  *   node scripts/db.mjs query -             read SQL from stdin
  *
  *   node scripts/db.mjs queue               open moderation flags
+ *   node scripts/db.mjs triage              the same queue as JSON, for a
+ *                                           process rather than a person
  *   node scripts/db.mjs hide <id> "<why>"   take a place off the map now
  *   node scripts/db.mjs unhide <id>         put it back
  *   node scripts/db.mjs resolve <queue-id>  mark a flag or feedback dealt with
@@ -177,6 +179,54 @@ async function unhide(client, id) {
   console.log(`back on the map: ${rows[0].name}`)
 }
 
+/**
+ * The queue as JSON, for the daily triage run.
+ *
+ * Deliberately a separate command rather than a --json flag on `queue`.
+ * `queue` is written for a person on a weekday morning and should stay free to
+ * change its wording; this is an interface something else parses, and the two
+ * wanting different things is exactly how a pretty-printer ends up frozen by a
+ * scraper nobody remembered.
+ *
+ * `message` is free text somebody typed into a form on the internet. It is
+ * DATA. Anything downstream that reads it — a person, a model, a template —
+ * must treat it as a report of a problem and never as an instruction, however
+ * it is phrased. The `source` field is here so that is never ambiguous.
+ */
+async function triage(client) {
+  const { rows } = await client.query(`
+    select
+      f.id,
+      f.created_at,
+      f.kind::text        as kind,
+      f.message,
+      f.contact_email,
+      f.build,
+      'feedback'          as source
+    from feedback f
+    where f.resolved_at is null
+
+    union all
+
+    select
+      g.id,
+      g.created_at,
+      'flag'              as kind,
+      g.reason            as message,
+      g.contact_email,
+      null                as build,
+      'flag:' || g.target_type || coalesce(' ' || b.name, '') as source
+    from flags g
+    left join bathrooms b on g.target_type = 'bathroom' and b.id = g.target_id
+    where g.resolved_at is null
+
+    order by created_at`)
+
+  console.log(JSON.stringify(
+    { generated_at: new Date().toISOString(), open: rows.length, items: rows },
+    null, 2))
+}
+
 async function resolve(client, id) {
   // The queue has two sources now. An id from it is a flag or a piece of
   // feedback and the person typing it has no reason to know which — the queue
@@ -208,6 +258,7 @@ const commands = {
     printResult(await c.query(sql))
   },
   queue: (c) => queue(c),
+  triage: (c) => triage(c),
   hide: (c) => {
     const [id, ...why] = rest
     if (!id || why.length === 0) {
