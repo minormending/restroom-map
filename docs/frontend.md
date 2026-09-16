@@ -164,11 +164,14 @@ instead — a 44px filled circle would be the heaviest thing in the header, and
 "move" and "edit the code" are sized the same way, because both sit inline in
 a sentence.
 
-This read "every control in a sheet" for a while and was not true. The detail
-sheet was done first and the add-a-place sheet was missed entirely, at
-37–39px, which was the contribution path. Two inputs are still under:
-`.code-form input` and `.flag-form input`, both 35px, both in the detail
-sheet. Measure before repeating the claim.
+This read "every control in a sheet" for a while and was not true, twice. The
+detail sheet was done first and the add-a-place sheet was missed entirely, at
+37–39px, which was the contribution path; then `.code-form input` and
+`.flag-form input` sat at 35px for another day, both in the detail sheet the
+first pass had supposedly finished. Both now take `min-height: var(--touch)`
+from the same rule as the textarea beside them. The claim is true as written
+today — which is exactly how it read on the two days it was false, so measure
+before repeating it.
 
 </details>
 
