@@ -1374,7 +1374,8 @@ button { font: inherit; color: inherit; }
   resize: vertical;
 }
 
-.feedback-send { min-height: var(--touch); align-self: flex-start; }
+/* min-height comes from the shared .btn-primary rule now. */
+.feedback-send { align-self: flex-start; }
 
 .feedback-done { margin: 0.7rem 0 0; font-size: 0.88rem; color: var(--ok); }
 
