@@ -1037,8 +1037,15 @@ button { font: inherit; color: inherit; }
   margin-top: 0.5rem;
 }
 
+/* 37px at 375px, in both steps of the add flow. The detail sheet's controls
+   were raised to --touch and these were missed, which put the smallest buttons
+   in the app on the path somebody uses to give it a place. */
 .btn-primary,
 .btn-quiet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch);
   padding: 0.45rem 0.9rem;
   border-radius: 6px;
   font-size: 0.88rem;
@@ -1054,7 +1061,13 @@ button { font: inherit; color: inherit; }
 }
 .btn-primary:disabled { opacity: 0.5; cursor: default; }
 
+/* "move", beside the coordinates, and "edit the code" in the detail sheet: both
+   sit inline in a sentence, where a genuinely 44px-tall underlined word would
+   be the loudest thing in the line. Same answer as the sheet's close ring —
+   keep the look, grow a pseudo-element, which is a child so the press still
+   lands on the button. */
 .linkish {
+  position: relative;
   background: none;
   border: none;
   padding: 0;
@@ -1065,6 +1078,15 @@ button { font: inherit; color: inherit; }
   text-underline-offset: 2px;
   cursor: pointer;
 }
+.linkish::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: max(100%, var(--touch));
+  height: var(--touch);
+}
 
 .field { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.84rem; }
 .field > span { color: var(--ink-3); }
@@ -1074,11 +1096,14 @@ button { font: inherit; color: inherit; }
    surface and took it to roughly 3.1:1, which is the exact failure the comment
    on that token was written to prevent. */
 .field em { font-style: normal; font-size: 0.94em; }
+/* A text field is a touch target too: you tap it to put a caret in it. These
+   were 37-39px in the add form and the feedback form both. */
 .field input,
 .field select {
   font: inherit;
   font-family: var(--f-body);
   font-size: 0.94rem;
+  min-height: var(--touch);
   color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--rule);
@@ -1349,7 +1374,8 @@ button { font: inherit; color: inherit; }
   resize: vertical;
 }
 
-.feedback-send { min-height: var(--touch); align-self: flex-start; }
+/* min-height comes from the shared .btn-primary rule now. */
+.feedback-send { align-self: flex-start; }
 
 .feedback-done { margin: 0.7rem 0 0; font-size: 0.88rem; color: var(--ok); }
 
