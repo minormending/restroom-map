@@ -168,13 +168,20 @@ export default function AddPlace({ center, onFlyTo, onCancel, onAdded }: Props) 
         </label>
       )}
 
+      {/*
+        The parentheses are content, not decoration. "Address optional" read as
+        one phrase: the only thing separating the two words was <em> at 0.94em,
+        which is under a pixel at this size. The fade that used to do the job
+        was removed in 742815a for failing contrast, and size alone did not
+        replace it. Brackets cost no contrast and survive being read aloud.
+      */}
       <label className="field">
-        <span>Address <em>optional</em></span>
+        <span>Address <em>(optional)</em></span>
         <input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} />
       </label>
 
       <label className="field">
-        <span>How to find it <em>optional</em></span>
+        <span>How to find it <em>(optional)</em></span>
         <input value={hint} onChange={(e) => setHint(e.target.value)}
                placeholder="Back past the counter, down the stairs" maxLength={200} />
       </label>
