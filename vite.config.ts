@@ -25,6 +25,10 @@ import { VitePWA } from 'vite-plugin-pwa'
  * when the whole point is reading it out when something looks wrong.
  */
 function buildId(): string {
+  // A screenshot build pins this: the count differs between any two commits,
+  // so without it every shot showing the version tag differs for a reason
+  // that has nothing to do with the change being reviewed.
+  if (process.env.BUILD_ID) return process.env.BUILD_ID
   try {
     return execSync('git rev-list --count HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
       .toString().trim() || 'dev'

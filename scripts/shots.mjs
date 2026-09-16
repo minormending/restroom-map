@@ -127,6 +127,8 @@ console.log('building against the fixture host…')
 await run('pnpm', ['build'], {
   VITE_SUPABASE_URL: 'https://fixture.supabase.co',
   VITE_SUPABASE_ANON_KEY: 'sb_publishable_fixture_not_a_real_key',
+  // Pinned, so the version tag is not a difference between two shots.
+  BUILD_ID: 'shots',
 })
 
 // --- serve ------------------------------------------------------------------

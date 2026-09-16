@@ -42,7 +42,11 @@ const args = process.argv.slice(2)
 const dryRun = args.includes('--dry-run')
 const baseAt = args.indexOf('--base')
 const base = baseAt === -1 ? 'main' : args[baseAt + 1]
-const states = args.filter((a, i) => !a.startsWith('--') && i !== baseAt + 1)
+// Skip flags and the one value that follows --base. The earlier version
+// excluded index `baseAt + 1` outright, which is 0 when --base is absent, so
+// a single named state was silently dropped and every state was captured.
+const states = args.filter((a, i) =>
+  !a.startsWith('--') && !(baseAt !== -1 && i === baseAt + 1))
 
 const git = (...a) => execFileSync('git', a, { cwd: ROOT, encoding: 'utf8' }).trim()
 const sh = (cmd, a, opts = {}) =>
