@@ -30,7 +30,7 @@
 import { spawn } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
-import { join, extname } from 'node:path'
+import { join, resolve, extname } from 'node:path'
 import { chromium } from 'playwright'
 import { ROOT } from './lib/connect.mjs'
 
@@ -92,23 +92,29 @@ const STATES = {
 }
 
 const args = process.argv.slice(2)
+
+/** Flags that consume the next argument, so it is not mistaken for a state. */
+const VALUED = new Set(['--out', '--width', '--height'])
+
 const opt = (name, fallback) => {
   const i = args.indexOf(`--${name}`)
   return i === -1 ? fallback : args[i + 1]
 }
-const outDir = join(ROOT, opt('out', 'shots'))
+// resolve, not join: pr-shots.mjs hands this an absolute temp directory.
+const outDir = resolve(ROOT, opt('out', 'shots'))
 const width = Number(opt('width', 375))
 const height = Number(opt('height', 812))
-const wanted = args.filter((a) => !a.startsWith('--') && STATES[a])
-const states = wanted.length ? wanted : Object.keys(STATES)
 
-const unknown = args.filter((a) => !a.startsWith('--') && !STATES[a] &&
-  !['out', String(width), String(height)].includes(a))
+const positional = args.filter((a, i) =>
+  !a.startsWith('--') && !VALUED.has(args[i - 1]))
+
+const unknown = positional.filter((a) => !STATES[a])
 if (unknown.length) {
   console.error(`unknown state(s): ${unknown.join(', ')}`)
   console.error(`known: ${Object.keys(STATES).join(', ')}`)
   process.exit(1)
 }
+const states = positional.length ? positional : Object.keys(STATES)
 
 // --- build ------------------------------------------------------------------
 
