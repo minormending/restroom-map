@@ -6,6 +6,7 @@
  *   node scripts/pr-shots.mjs menu feedback         capture, publish, print markdown
  *   node scripts/pr-shots.mjs --dry-run menu        capture and diff, publish nothing
  *   node scripts/pr-shots.mjs --base main menu      compare against something else
+ *   node scripts/pr-shots.mjs --width 1280 list     at a desktop width, not a phone
  *
  * Prints a markdown table to stdout. Paste it into the PR body, or let the
  * triage process do that.
@@ -42,11 +43,24 @@ const args = process.argv.slice(2)
 const dryRun = args.includes('--dry-run')
 const baseAt = args.indexOf('--base')
 const base = baseAt === -1 ? 'main' : args[baseAt + 1]
-// Skip flags and the one value that follows --base. The earlier version
-// excluded index `baseAt + 1` outright, which is 0 when --base is absent, so
-// a single named state was silently dropped and every state was captured.
-const states = args.filter((a, i) =>
-  !a.startsWith('--') && !(baseAt !== -1 && i === baseAt + 1))
+
+/* Flags that consume the argument after them. Their values are not states, and
+   the two size ones are handed on to shots.mjs unchanged. */
+const VALUED = new Set(['--base', '--width', '--height'])
+const takesValue = new Set(
+  args.flatMap((a, i) => (VALUED.has(a) && args[i + 1] !== undefined ? [i + 1] : [])))
+
+// Skip flags and any value that belongs to one. The earlier version excluded
+// index `baseAt + 1` outright, which is 0 when --base is absent, so a single
+// named state was silently dropped and every state was captured.
+const states = args.filter((a, i) => !a.startsWith('--') && !takesValue.has(i))
+
+/* --width/--height go through to the capture. Without them this tool is fixed
+   at a phone, and a change that only happens on a desktop reports "0 states
+   changed" — which reads as "nothing moved" rather than "nothing was looked
+   at". The list becoming a reading column above 48rem is exactly that shape. */
+const size = args.flatMap((a, i) =>
+  ((a === '--width' || a === '--height') && args[i + 1] !== undefined ? [a, args[i + 1]] : []))
 
 const git = (...a) => execFileSync('git', a, { cwd: ROOT, encoding: 'utf8' }).trim()
 const sh = (cmd, a, opts = {}) =>
@@ -68,7 +82,7 @@ const beforeDir = join(work, 'before')
 const afterDir = join(work, 'after')
 
 const capture = (out) =>
-  sh('node', ['scripts/shots.mjs', '--out', out, ...states], { stdio: 'inherit' })
+  sh('node', ['scripts/shots.mjs', '--out', out, ...size, ...states], { stdio: 'inherit' })
 
 console.log(`\n=== after: ${branch} ===`)
 capture(afterDir)
@@ -141,7 +155,10 @@ if (dryRun) {
 
 // --- publish ----------------------------------------------------------------
 
-const slug = `${branch.replace(/[^a-zA-Z0-9._-]/g, '-')}-${head.slice(0, 7)}`
+/* The width is in the slug so a desktop run and a phone run of the same commit
+   publish side by side instead of one overwriting the other. */
+const shotSize = JSON.parse(readFileSync(join(afterDir, 'states.json'), 'utf8'))
+const slug = `${branch.replace(/[^a-zA-Z0-9._-]/g, '-')}-${head.slice(0, 7)}-${shotSize.width}`
 const pub = mkdtempSync(join(tmpdir(), 'pr-shots-pub-'))
 
 const remote = git('remote', 'get-url', 'origin')
@@ -189,7 +206,7 @@ const raw = (kind, f) =>
 console.log(`\n--- paste into the PR ---\n`)
 console.log(`### Before and after\n`)
 console.log(`${states.length ? '' : 'Every state captured; '}` +
-  `${changed.length} changed, at 375×812.\n`)
+  `${changed.length} changed, at ${shotSize.width}×${shotSize.height}.\n`)
 console.log('| | before | after |')
 console.log('| --- | --- | --- |')
 for (const f of changed) {
