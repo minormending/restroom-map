@@ -107,7 +107,7 @@ A reviewer looking at a CSS diff cannot tell whether it is right, so a triage
 PR carries before-and-after images.
 
 ```bash
-node scripts/shots.mjs        # eleven named states, to shots/
+node scripts/shots.mjs        # fifteen named states, to shots/
 node scripts/pr-shots.mjs     # the same, before and after, published
 ```
 

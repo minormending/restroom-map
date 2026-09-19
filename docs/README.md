@@ -1,6 +1,6 @@
 # How this thing works
 
-Six documents. Read them in order the first time; after that, jump.
+Seven documents. Read them in order the first time; after that, jump.
 
 | | what it answers |
 | --- | --- |
@@ -9,6 +9,7 @@ Six documents. Read them in order the first time; after that, jump.
 | [trust.md](trust.md) | How does something become a fact? This is the interesting one. |
 | [security.md](security.md) | Who may write what, and what stops somebody flooding it? |
 | [frontend.md](frontend.md) | Where does the React live and why is the map a problem? |
+| [testing.md](testing.md) | What is checked, by which of the four systems, and what gates a merge? |
 | [triage.md](triage.md) | What happens to a complaint after somebody sends it? |
 
 Each one is written for somebody who has never seen this codebase. Where there

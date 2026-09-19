@@ -149,8 +149,15 @@ pnpm test credits                  # suites matching a name
 node scripts/test.mjs --verbose    # list passing tests too
 ```
 
-Three suites — `harness`, `credits`, `codes` — over the two places where a
-silent bug costs somebody money or hands out a code they did not pay for.
+Eight suites, 76 tests — `harness`, `credits`, `codes`, `access claims`,
+`hours`, `feedback`, `flags` and `write grants` — over the places where a
+silent bug costs somebody money, hands out a code they did not pay for, turns
+one person's opinion into a fact, or lets a write in through a door that was
+supposed to be shut.
+
+[docs/testing.md](docs/testing.md) is the guided version: what each suite pins
+down, how to write one, and the `become()` / `asRole()` distinction that makes
+a permission test pass against a wide-open schema.
 
 They run against the project database, because that is where the code under
 test lives: Postgres functions sitting on PostGIS and Supabase's auth schema,
@@ -259,12 +266,13 @@ Business removal requests arrive through the same queue and sort to the top —
 ## Documentation
 
 [`docs/`](docs/) is the long form: the system shape, the data model, how
-something becomes a fact, who may write what, and the front end. Written for
-somebody who has not seen this before, with the deeper detail folded into
-"Advanced" blocks.
+something becomes a fact, who may write what, the front end, and what tests
+it. Written for somebody who has not seen this before, with the deeper detail
+folded into "Advanced" blocks.
 
 Start at [docs/README.md](docs/README.md). [docs/trust.md](docs/trust.md) is
-the one to read before changing anything, and
+the one to read before changing anything, [docs/testing.md](docs/testing.md)
+is the one to read before trusting a green run, and
 [docs/triage.md](docs/triage.md) is what happens to a complaint after somebody
 sends one.
 
