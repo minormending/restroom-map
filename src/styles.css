@@ -669,6 +669,32 @@ button { font: inherit; color: inherit; }
 .place-list.is-empty { padding-top: 2rem; }
 .place-list.is-empty p { color: var(--ink-3); font-size: 0.9rem; }
 
+/* A reading column on a wide screen, not a 1256px-wide row.
+   Each card is three short lines — a name, "Café · Code required · 120 m", and
+   what is settled — and the widest of them across the whole fixture is 434px
+   of text. Left full-bleed at 1280 that filled 35% of the card and the rest
+   was empty surface, and the eye had to travel the width of the window to get
+   from a name back to the next one.
+   36rem holds the longest line with room to spare. It stays a single column
+   rather than becoming a grid because this list is the access route for
+   anybody who cannot use the canvas, and a 1256px row is worst of all under
+   screen magnification — at 4x it is six screens of horizontal panning per
+   card. Narrow is the accessible shape here, not just the tidy one. */
+@media (min-width: 48rem) {
+  .place-list > * { max-width: 36rem; }
+
+  /* Yield to the detail panel rather than run underneath it, which is what
+     sliced every visible card at its edge. The panel is 23rem at `right:
+     0.75rem`; with a 1rem gap and the list's own 0.75rem padding that is
+     25.5rem of window it cannot use. At 1280 there is room for both and this
+     resolves to the same 36rem, so opening a place moves nothing. At 768 —
+     the narrowest this breakpoint covers — the panel is half the window and
+     the column has to give way. */
+  .app:has(.sheet) .place-list > * {
+    max-width: min(36rem, calc(100vw - 25.5rem));
+  }
+}
+
 .view-toggle {
   flex: none;
   background: var(--surface);
