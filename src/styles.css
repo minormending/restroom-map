@@ -341,6 +341,24 @@ button { font: inherit; color: inherit; }
    readable — those are the two a reader cannot afford to miss. */
 .banners.is-listing .banner:not(.banner-error):not(.banner-stale) { display: none; }
 
+/* And the same again for the sign-in warning, which is the third thing that
+   lands on top of this stack. It is a white card with a 1px --rule border over
+   banners that are also white cards with a 1px --rule border, so where it
+   covered one the text simply stopped: "Showing Lower Manhatta", "84 pla".
+   Nothing about that reads as one card in front of another — it reads as
+   truncated text, which is the one thing a warning about a hostname must not
+   look like. Measured coverage of the banners behind it:
+
+     mobile   375x812   location hint 83%   count 64%
+     desktop 1280x800   location hint 19%   count  0%
+
+   Same exemption as the listing rule above, for the same reason: an error or
+   a stale-data notice is the one thing a reader cannot afford to lose, and
+   this warning is on screen for a couple of seconds. */
+.app:has(.signin-warn) .banners .banner:not(.banner-error):not(.banner-stale) {
+  display: none;
+}
+
 .banners {
   position: absolute;
   top: var(--below-bar);
