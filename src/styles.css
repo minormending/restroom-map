@@ -238,7 +238,14 @@ button { font: inherit; color: inherit; }
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-height: 70vh;
+  /* Bounded by the space there actually is, not by a round fraction of the
+     window. At 70vh the panel stopped 560px down an 800px screen — 173px of
+     chips hidden with 179px of empty viewport underneath it, and the cut
+     landing through the middle of a chip's text so it read as clipped rather
+     than scrollable. Measured against the bar the panel hangs from, the same
+     content now fits outright on a phone and scrolls by about a line on a
+     short desktop window. */
+  max-height: calc(100vh - var(--below-bar) - 1.5rem);
   overflow-y: auto;
 }
 
@@ -334,6 +341,24 @@ button { font: inherit; color: inherit; }
    readable — those are the two a reader cannot afford to miss. */
 .banners.is-listing .banner:not(.banner-error):not(.banner-stale) { display: none; }
 
+/* And the same again for the sign-in warning, which is the third thing that
+   lands on top of this stack. It is a white card with a 1px --rule border over
+   banners that are also white cards with a 1px --rule border, so where it
+   covered one the text simply stopped: "Showing Lower Manhatta", "84 pla".
+   Nothing about that reads as one card in front of another — it reads as
+   truncated text, which is the one thing a warning about a hostname must not
+   look like. Measured coverage of the banners behind it:
+
+     mobile   375x812   location hint 83%   count 64%
+     desktop 1280x800   location hint 19%   count  0%
+
+   Same exemption as the listing rule above, for the same reason: an error or
+   a stale-data notice is the one thing a reader cannot afford to lose, and
+   this warning is on screen for a couple of seconds. */
+.app:has(.signin-warn) .banners .banner:not(.banner-error):not(.banner-stale) {
+  display: none;
+}
+
 .banners {
   position: absolute;
   top: var(--below-bar);
@@ -383,7 +408,18 @@ button { font: inherit; color: inherit; }
   max-height: 72vh;
   border-top: 1px solid var(--rule);
   border-radius: 12px 12px 0 0;
-  padding: 1.1rem 1.15rem 1.4rem;
+  /* index.html sets `viewport-fit=cover`, so the page extends under the home
+     indicator instead of the browser insetting the viewport for us — and
+     nothing in this file read `env()` back. This sheet is the only thing
+     anchored at `bottom: 0`, so its last row was the only one landing in that
+     strip: 22.4px of padding against a 34px inset on an iPhone in portrait.
+     The flag form's Cancel/Send is what sits there.
+     Added to the padding rather than max()'d with it, so the 1.4rem gap the
+     design asks for survives above the indicator instead of collapsing onto
+     it. Resolves to the same 22.4px wherever the inset is 0, which is every
+     desktop browser and the audit.
+     `.nearby` (80px) and `.page-foot` (36.8px) already clear it. */
+  padding: 1.1rem 1.15rem calc(1.4rem + env(safe-area-inset-bottom, 0px));
 }
 
 @media (min-width: 48rem) {
@@ -845,7 +881,16 @@ button { font: inherit; color: inherit; }
 }
 .report-error { color: var(--bad); }
 
-.report-buttons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+/* One per row, not a wrapping flex line.
+   Three answers at their natural widths ("Worked", "Code was wrong",
+   "Wasn't there") never fit across the sheet, so they wrapped 2 + 1 — and the
+   one left alone on the second line stretched to fill it. Measured at 375px:
+   122px, 180px, then 309px. "Wasn't there" is the least likely answer of the
+   three and was getting two and a half times the target of the most likely
+   one, which is the opposite of what the sizes should say.
+   Stacking also keeps the two-option case (a place with no code) consistent
+   with the three-option one. */
+.report-buttons { display: grid; grid-template-columns: 1fr; gap: 0.4rem; }
 
 .report-btn {
   flex: 1 1 auto;
@@ -1402,12 +1447,17 @@ button { font: inherit; color: inherit; }
 .feedback { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 0.7rem; }
 
 .feedback-kind { border: none; margin: 0; padding: 0; }
+/* A field label, styled like the two field labels under it — not like a
+   section heading.
+   It was a copy of `.filters-body legend`, where mono small-caps is right:
+   that panel is six groups deep and the legends are headings that organise it.
+   Here there is one group, and "WHAT IS IT?" in 10.88px mono caps sat 40px
+   above "What happened?" in 13.44px sans sentence case, both labelling a field
+   in the same short form. Two systems, adjacent, for the same job.
+   The markup already says "What is it?" — only the CSS was shouting. */
 .feedback-kind legend {
-  font-family: var(--f-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ink-2);
+  font-size: 0.84rem;
+  color: var(--ink-3);
   padding: 0 0 0.4rem;
 }
 
