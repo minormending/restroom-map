@@ -845,7 +845,16 @@ button { font: inherit; color: inherit; }
 }
 .report-error { color: var(--bad); }
 
-.report-buttons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+/* One per row, not a wrapping flex line.
+   Three answers at their natural widths ("Worked", "Code was wrong",
+   "Wasn't there") never fit across the sheet, so they wrapped 2 + 1 — and the
+   one left alone on the second line stretched to fill it. Measured at 375px:
+   122px, 180px, then 309px. "Wasn't there" is the least likely answer of the
+   three and was getting two and a half times the target of the most likely
+   one, which is the opposite of what the sizes should say.
+   Stacking also keeps the two-option case (a place with no code) consistent
+   with the three-option one. */
+.report-buttons { display: grid; grid-template-columns: 1fr; gap: 0.4rem; }
 
 .report-btn {
   flex: 1 1 auto;
