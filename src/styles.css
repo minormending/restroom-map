@@ -254,16 +254,29 @@ button { font: inherit; color: inherit; }
 }
 
 /* Live feedback, not a control: quiet, but with the count banner's green so
-   the number reads as the same fact it was on the map. */
-.filters-count {
+   the number reads as the same fact it was on the map.
+
+   Shared with the list's count, which is the same sentence from the same
+   `placesInView()` and was the one place that opted out of both treatments —
+   15px in --ink with lining numerals, against 13.28px in --ink-2 with tabular
+   ones everywhere else. Toggling Map/List restyled a line that had not
+   changed.
+   Together here so they cannot drift apart again. What each context still
+   owns is its spacing and its divider: the panel rules itself off from the
+   filter groups under it, the list does not. */
+.filters-count,
+.place-list-count {
   margin: 0;
-  padding: 0 0 0.75rem;
-  border-bottom: 1px solid var(--rule);
   font-size: 0.83rem;
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
-.filters-count::before {
+
+.filters-count { padding: 0 0 0.75rem; border-bottom: 1px solid var(--rule); }
+.place-list-count { padding: 0.25rem 0 0.6rem; }
+
+.filters-count::before,
+.place-list-count::before {
   content: "";
   display: inline-block;
   width: 7px;
