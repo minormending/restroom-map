@@ -1411,12 +1411,17 @@ button { font: inherit; color: inherit; }
 .feedback { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 0.7rem; }
 
 .feedback-kind { border: none; margin: 0; padding: 0; }
+/* A field label, styled like the two field labels under it — not like a
+   section heading.
+   It was a copy of `.filters-body legend`, where mono small-caps is right:
+   that panel is six groups deep and the legends are headings that organise it.
+   Here there is one group, and "WHAT IS IT?" in 10.88px mono caps sat 40px
+   above "What happened?" in 13.44px sans sentence case, both labelling a field
+   in the same short form. Two systems, adjacent, for the same job.
+   The markup already says "What is it?" — only the CSS was shouting. */
 .feedback-kind legend {
-  font-family: var(--f-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ink-2);
+  font-size: 0.84rem;
+  color: var(--ink-3);
   padding: 0 0 0.4rem;
 }
 
