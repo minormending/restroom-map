@@ -8,7 +8,6 @@ import type { Account } from '../lib/auth'
 import { useEffect, useRef, useState } from 'react'
 import { confidenceLine, describeDistance, metresBetween, seasonalLine } from '../lib/format'
 import { ACCESS_LABELS, VENUE_LABELS, type Bathroom } from '../lib/types'
-import { accessColor } from '../map/icons'
 import { useEscape } from '../lib/useEscape'
 
 interface Props {
@@ -49,7 +48,6 @@ export default function DetailSheet({
   const merged = { ...bathroom, ...detail, ...(localCode ? { code: localCode } : {}) }
   const confidence = confidenceLine(merged.confirms, merged.troubles, merged.last_confirmed)
   const season = seasonalLine()
-  const accent = accessColor(merged.access_kind)
 
   const away = near ? describeDistance(metresBetween(near, [merged.lng, merged.lat])) : null
   // Universal Maps URL: resolves to the platform's own app on iOS and Android
@@ -83,7 +81,7 @@ export default function DetailSheet({
         </button>
 
         <header className="sheet-head">
-          <span className="sheet-kind" style={{ color: accent }}>
+          <span className="sheet-kind" data-access={merged.access_kind}>
             {VENUE_LABELS[merged.venue_type]} · {ACCESS_LABELS[merged.access_kind]}
           </span>
           <h2>{merged.name}</h2>

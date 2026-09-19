@@ -16,6 +16,20 @@
   --ok:          #1B6B42;
   --warn:        #8A5A0D;
   --bad:         #9E2F2F;
+
+  /* The access kinds again, but as *text*.
+     ACCESS_COLORS in map/icons.ts is a fill scale — it colours pin bodies and
+     the filter swatches, where the only requirement is that four hues stay
+     apart. The detail sheet's eyebrow was taking those same values through an
+     inline style and using them as small type, where AA asks 4.5:1. Measured
+     on the sheet surface, five of the eight kind/theme combinations failed:
+     open 4.38 and code_required 3.18 in light; open 3.79, ask_staff 3.31 and
+     customers_only 3.13 in dark, because an inline style cannot know which
+     theme it is in. Two scales, because the two jobs have different floors. */
+  --access-open:      #0F7A46;
+  --access-code:      #9C630C;
+  --access-ask:       #2C6BD6;
+  --access-customers: #8A4FBF;
   --shadow:      0 2px 6px rgba(20, 32, 44, 0.09), 0 8px 24px rgba(20, 32, 44, 0.10);
 
   --f-body: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -63,6 +77,10 @@
     --ok:          #5BB57F;
     --warn:        #D3A04A;
     --bad:         #E2776F;
+    --access-open:      #5BB57F;
+    --access-code:      #D3A04A;
+    --access-ask:       #77A6EC;
+    --access-customers: #BB93E0;
     --shadow:      0 2px 6px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
   }
 }
@@ -81,6 +99,10 @@
   --ok:          #5BB57F;
   --warn:        #D3A04A;
   --bad:         #E2776F;
+  --access-open:      #5BB57F;
+  --access-code:      #D3A04A;
+  --access-ask:       #77A6EC;
+  --access-customers: #BB93E0;
   --shadow:      0 2px 6px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
@@ -505,6 +527,13 @@ button { font: inherit; color: inherit; }
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
+/* Keyed off the attribute rather than set inline from JS, which is the whole
+   point: an inline colour is one value for both themes, and the dark sheet
+   needs lighter text than the white one does. */
+.sheet-kind[data-access="open"]           { color: var(--access-open); }
+.sheet-kind[data-access="code_required"]  { color: var(--access-code); }
+.sheet-kind[data-access="ask_staff"]      { color: var(--access-ask); }
+.sheet-kind[data-access="customers_only"] { color: var(--access-customers); }
 
 .sheet-head h2 {
   margin: 0;
@@ -536,8 +565,13 @@ button { font: inherit; color: inherit; }
 .confidence.tone-good { border-left-color: var(--ok); color: var(--ok); }
 .confidence.tone-warn,
 .seasonal.tone-warn { border-left-color: var(--warn); color: var(--warn); }
+/* --ink-2, not --ink-3. This panel is tinted --surface-alt, and --ink-3 is
+   tuned to 4.77:1 on plain white — on the tint it is 4.44:1 in light and
+   4.32:1 in dark, both under the 4.5 AA floor. Third time this file has been
+   caught by the same thing: a colour measured against one surface, used on a
+   tinted one. */
 .confidence.tone-unknown,
-.seasonal.tone-unknown { color: var(--ink-3); }
+.seasonal.tone-unknown { color: var(--ink-2); }
 
 .code-block {
   display: flex;
