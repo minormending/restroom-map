@@ -390,7 +390,18 @@ button { font: inherit; color: inherit; }
   max-height: 72vh;
   border-top: 1px solid var(--rule);
   border-radius: 12px 12px 0 0;
-  padding: 1.1rem 1.15rem 1.4rem;
+  /* index.html sets `viewport-fit=cover`, so the page extends under the home
+     indicator instead of the browser insetting the viewport for us — and
+     nothing in this file read `env()` back. This sheet is the only thing
+     anchored at `bottom: 0`, so its last row was the only one landing in that
+     strip: 22.4px of padding against a 34px inset on an iPhone in portrait.
+     The flag form's Cancel/Send is what sits there.
+     Added to the padding rather than max()'d with it, so the 1.4rem gap the
+     design asks for survives above the indicator instead of collapsing onto
+     it. Resolves to the same 22.4px wherever the inset is 0, which is every
+     desktop browser and the audit.
+     `.nearby` (80px) and `.page-foot` (36.8px) already clear it. */
+  padding: 1.1rem 1.15rem calc(1.4rem + env(safe-area-inset-bottom, 0px));
 }
 
 @media (min-width: 48rem) {
