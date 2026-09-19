@@ -432,7 +432,7 @@ these need a person to walk somewhere; the rest need a decision or a payment.
   all, so a screen reader user could filter and be handed nothing; there is a
   list view now, it is keyboard reachable, sheets take focus and announce
   themselves, controls in a sheet clear 44px, and the accessibility, layout and
-  health checks pass across twelve screens at three widths.
+  health checks pass across eighteen screens at three widths.
 
   None of that is the same as somebody actually using it. Structure was
   verified; experience was not. For a project positioned on disability, one

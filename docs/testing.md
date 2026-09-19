@@ -13,7 +13,7 @@ graph TB
     end
 
     subgraph other["ui-audit, a separate repo"]
-        audit["144 checks<br/>visual · layout · a11y · health"]
+        audit["216 checks<br/>visual · layout · a11y · health"]
     end
 
     types --> ci["CI on every PR"]
@@ -270,7 +270,7 @@ npm run build:targets restroom-map
 AUDIT_ONLY=restroom-map npx playwright test
 ```
 
-**144 checks: 12 registered states × 3 viewports × 4 kinds.**
+**216 checks: 18 registered states × 3 viewports × 4 kinds.**
 
 ```mermaid
 graph LR
@@ -367,20 +367,42 @@ a changed word registered on none of them.
 
 ### What the audit cannot see
 
-It measures rules. It cannot tell you a screen looks wrong.
+It measures rules. It cannot tell you a screen looks wrong. And it can only
+measure the screens somebody has registered.
 
-The worked example is recent. `.place-list` was pinned with a hard-coded
-`inset: 3.4rem 0 0` while the top bar's clearance lives in `--below-bar`, which
-grows to `7rem` when the bar wraps to two rows. Signed in at phone width, 50.1px
-of the list — the whole first card — sat behind the toolbar.
+The worked example is recent, and it is kept here in the order it happened
+because the order is the lesson.
 
-The audit was green through all of it, for a dull reason: **`targets.json`
-registers no list state for this project.** The twelve screens under test are
-the map, its sheets and the two legal pages. It was found by eye, in a pass over
-screenshots of states the registry does not cover.
+`.place-list` was pinned with a hard-coded `inset: 3.4rem 0 0` while the top
+bar's clearance lives in `--below-bar`, which grows to `7rem` when the bar wraps
+to two rows. Signed in at phone width, 50.1px of the list — the whole first
+card — sat behind the toolbar. **The audit was green through all of it**, for a
+dull reason: `targets.json` registered no list state. The twelve screens under
+test were the map, its sheets and the two legal pages. It was found by eye, in a
+pass over screenshots of states the registry did not cover.
 
-So: if you add a screen, register it. And when something looks wrong, trust that
-over a green run.
+Three more were found the same way and stayed green the same way: the list
+rendering 1256px wide on a desktop, one sentence styled three different ways,
+and a sign-in warning covering 83% of the banner behind it.
+
+Then the six missing screens were registered — `list`, `detail`, `flag-form`,
+`code-form`, `sign-in-warning`, `account-menu` — and **the first run found two
+more, immediately**, both serious contrast failures that had been shipping the
+whole time:
+
+| | |
+| --- | --- |
+| `.sheet-kind` | a fill colour used as 0.7rem type, worst at **3.13:1**. Five of eight kind/theme combinations failed, and the dark-mode half could never have passed: the colour came from an inline style, which is one value for both themes |
+| `.confidence.tone-unknown` | `--ink-3`, tuned to 4.77:1 on white, on a tinted surface — 4.44:1 light and 4.32:1 dark |
+
+Twelve screens became eighteen; 144 checks became 216.
+
+So, two things, and the second is the one that costs people:
+
+- When something looks wrong, trust that over a green run.
+- **If you add a screen, register it.** An unregistered screen is not
+  "untested" in a way anybody notices — it is a screen the suite reports as
+  fine.
 
 ---
 

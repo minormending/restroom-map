@@ -219,16 +219,18 @@ than by reading. The fill was removed rather than overridden a third time.
 ## Testing the UI
 
 Visual, a11y, layout and console checks live in a separate repo (`ui-audit`)
-and run against a build of this one: **144 checks — 12 registered states × 3
+and run against a build of this one: **216 checks — 18 registered states × 3
 widths × 4 kinds.** Several of those states are only reachable through
 deliberate setup — routed fixtures, a seeded session for the signed-in and
 add-a-place screens, a fixed geolocation for the nearby prompt — because none
 of them has a URL.
 
 If you add a screen that is behind a click, a permission or a session, it has
-no coverage until somebody registers it. That has already hidden two real
-contrast failures, and later a 50px collision between the list and the top bar
-that stayed green because no list state is registered at all.
+no coverage until somebody registers it — and an unregistered screen is not
+reported as untested, it is reported as fine. That hid two contrast failures,
+then a 50px collision between the list and the top bar, then three more design
+faults; and when the six missing screens were finally registered, the first run
+turned up two further contrast failures that had been shipping all along.
 
 **[testing.md](testing.md)** has the rest: what each check asserts, the three
 `targets.json` keys that make this app reachable, and the two systems that do
