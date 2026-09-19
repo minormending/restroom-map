@@ -633,9 +633,16 @@ button { font: inherit; color: inherit; }
 /* Over the map rather than beside it: at phone width there is no beside, and
    somebody who needs the list needs it to be the whole surface, not a panel
    competing with a canvas they cannot read. */
+/* Cleared by the same variable as the banners, not by a number of its own.
+   At 3.4rem this sat under a one-row bar with 1.3px to spare and broke
+   outright the moment the bar grew: signed in at phone width the bar wraps to
+   two rows and stands 104.5px tall, so 50.1px of the list — the first card —
+   was behind it. `--below-bar` already knows about the wrap (see the
+   `.top-bar:has(.add-place)` block below); the banners were moved onto it and
+   this was not. */
 .place-list {
   position: absolute;
-  inset: 3.4rem 0 0;
+  inset: var(--below-bar) 0 0;
   z-index: 8;
   overflow-y: auto;
   /* --bg is not a token here; the page background is --ground. It failed
