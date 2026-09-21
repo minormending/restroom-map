@@ -27,9 +27,14 @@ import { suite, eq, ok } from '../lib/testkit.mjs'
  * after, until somebody adds set_display_name() and grants execute on that
  * rather than putting the table grant back.
  */
+/*
+ * flags, feedback and profiles are no longer this app's tables. They moved to
+ * the shared `public` layer when this database started hosting several apps,
+ * and the platform migrations own their grants and their tests. What is left
+ * here is what this app actually owns.
+ */
 const CLOSED = [
-  'bathrooms', 'bathroom_codes', 'reports', 'flags', 'feedback', 'access_claims',
-  'profiles',
+  'bathrooms', 'bathroom_codes', 'reports', 'access_claims',
 ]
 
 /**
@@ -46,7 +51,7 @@ const OPEN = [
 
 const grants = (t, table) =>
   t.sql(`select grantee, privilege_type from information_schema.role_table_grants
-         where table_schema = 'public' and table_name = $1
+         where table_schema = 'restroom' and table_name = $1
            and grantee in ('anon','authenticated')
            and privilege_type in ('INSERT','UPDATE','DELETE')
          order by grantee, privilege_type`, [table])
@@ -65,7 +70,7 @@ suite('write grants', (test) => {
     const rows = await t.sql(
       `select table_name, grantee, privilege_type
        from information_schema.role_table_grants
-       where table_schema = 'public' and grantee in ('anon','authenticated')
+       where table_schema = 'restroom' and grantee in ('anon','authenticated')
          and privilege_type in ('INSERT','UPDATE','DELETE')
        order by table_name, privilege_type`)
     for (const r of rows) found.push(`${r.table_name}:${r.privilege_type}`)
@@ -92,9 +97,6 @@ suite('write grants', (test) => {
                            'direct', 'cafe', 'open')`, []],
       bathroom_codes: [`insert into bathroom_codes (bathroom_id, code) values ($1, '1234')`, [place.id]],
       reports: [`insert into reports (bathroom_id, kind, geo_verified) values ($1, 'works', false)`, [place.id]],
-      flags: [`insert into flags (target_type, target_id, reason)
-               values ('bathroom', $1, 'direct')`, [place.id]],
-      feedback: [`insert into feedback (kind, message) values ('bug', 'direct')`, []],
     }
 
     for (const [table, [sql, args]] of Object.entries(writes)) {
@@ -115,10 +117,10 @@ suite('write grants', (test) => {
     const place = await t.place({ owner })
 
     await t.become(await t.anonVisitor())
-    ok((await t.val('select submit_flag($1,$2,$3,$4)',
-      ['bathroom', place.id, 'still works', null])).ok, 'submit_flag')
-    ok((await t.val('select submit_feedback($1,$2,$3,$4)',
-      ['bug', 'still works', null, 'v1'])).ok, 'submit_feedback')
+    ok((await t.val('select submit_flag($1,$2,$3,$4,$5)',
+      ['restroom-map', 'bathroom', place.id, 'still works', null])).ok, 'submit_flag')
+    ok((await t.val('select submit_feedback($1,$2,$3,$4,$5)',
+      ['restroom-map', 'bug', 'still works', null, 'v1'])).ok, 'submit_feedback')
 
     // And a place created through submit_bathroom, which t.place already does
     // for every fixture in this suite.

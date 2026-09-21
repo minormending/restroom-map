@@ -71,10 +71,22 @@ string. .env is gitignored either way.`)
   process.exit(1)
 }
 
+/**
+ * This app's tables live in the `restroom` schema of a database shared with
+ * other apps. `public` still comes second, because profiles, rate limiting and
+ * the moderation queue live there and are shared by every app.
+ *
+ * Setting it here rather than per script also means `schema_migrations` lands
+ * in `restroom`, so each app tracks its own migrations instead of colliding on
+ * version numbers — every one of them starts at 0001.
+ */
+export const SCHEMA = process.env.RESTROOM_SCHEMA ?? 'restroom'
+
 export async function withClient(fn, options) {
   const client = new pg.Client(dbConfig(options))
   await client.connect()
   try {
+    await client.query(`set search_path = ${SCHEMA}, public, extensions`)
     return await fn(client)
   } finally {
     await client.end()

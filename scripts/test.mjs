@@ -205,7 +205,7 @@ function context(client, state) {
       await client.query(`
         create or replace function can_view_code(p_user uuid, p_bathroom uuid)
         returns boolean
-        language sql stable security definer set search_path = public, extensions as $fn$
+        language sql stable security definer set search_path = restroom, public, extensions as $fn$
           select p_user is not null and (
             exists (select 1 from bathrooms
                     where id = p_bathroom and created_by = p_user)

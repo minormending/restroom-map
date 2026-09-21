@@ -25,7 +25,10 @@ export interface Feedback {
 export async function sendFeedback({ kind, message, email }: Feedback): Promise<void> {
   if (!supabase) throw new Error('Sending feedback needs a database connection.')
 
+  // submit_feedback lives in `public` and serves every app in the database, so
+  // it needs to be told which one is calling.
   const { error } = await supabase.rpc('submit_feedback', {
+    p_app: 'restroom-map',
     p_kind: kind,
     p_message: message,
     p_contact_email: email?.trim() || null,
