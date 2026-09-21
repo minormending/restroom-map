@@ -13,7 +13,7 @@
 import { suite, eq, ok } from '../lib/testkit.mjs'
 
 const flag = (t, place, reason, email = null) =>
-  t.val('select submit_flag($1,$2,$3,$4)', ['bathroom', place.id, reason, email])
+  t.val('select submit_flag($1,$2,$3,$4,$5)', ['restroom-map', 'bathroom', place.id, reason, email])
 
 const queued = (t, place) =>
   t.sql(`select reason, contact_email, awaiting_reply, bathroom_name
@@ -61,8 +61,8 @@ suite('flags', (test) => {
     for (const role of ['anon', 'authenticated']) {
       await t.raises(
         () => t.asRole(role, () => t.sql(
-          `insert into flags (target_type, target_id, reason)
-           values ('bathroom', $1, 'straight in')`, [place.id])),
+          `insert into public.flags (app, target_type, target_id, message)
+           values ('restroom-map', 'bathroom', $1, 'straight in')`, [place.id])),
         '42501', `writing to flags as ${role}`)
     }
 
@@ -78,8 +78,8 @@ suite('flags', (test) => {
   test('an unknown target type is refused rather than stored', async (t) => {
     await t.become(await t.anonVisitor())
     await t.raises(
-      () => t.val('select submit_flag($1,$2,$3,$4)',
-        ['bathhouse', '00000000-0000-4000-8000-000000000001', 'whatever', null]),
+      () => t.val('select submit_flag($1,$2,$3,$4,$5)',
+        ['restroom-map', 'bathhouse', '00000000-0000-4000-8000-000000000001', 'whatever', null]),
       '22023', 'an invented target type')
   })
 

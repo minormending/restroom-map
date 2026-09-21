@@ -10,7 +10,7 @@
 import { suite, eq, ok } from '../lib/testkit.mjs'
 
 const send = (t, kind, message, email = null) =>
-  t.val('select submit_feedback($1,$2,$3,$4)', [kind, message, email, 'v99'])
+  t.val('select submit_feedback($1,$2,$3,$4,$5)', ['restroom-map', kind, message, email, 'v99'])
 
 const queued = (t) =>
   t.sql(`select subject, reason, contact_email, awaiting_reply from (

@@ -442,7 +442,7 @@ these need a person to walk somewhere; the rest need a decision or a payment.
 
 - **The sign-in screen says `supabase.co`, not Restroom Map.** Diagnosed and
   mitigated; not fixed. Google's consent screen reads "to continue to
-  zfxrhykegdilxssghmyf.supabase.co", and on a page asking for a Google password
+  gwlgmuiorzwfsimlfvuk.supabase.co", and on a page asking for a Google password
   an unrecognisable hostname reads as phishing. Contributing requires an
   account, so this screen stands between the project and the only mechanism by
   which it gets the data the item above is about.
