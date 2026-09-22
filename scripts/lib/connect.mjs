@@ -82,6 +82,18 @@ string. .env is gitignored either way.`)
  */
 export const SCHEMA = process.env.RESTROOM_SCHEMA ?? 'restroom'
 
+/**
+ * Which app's rows these are.
+ *
+ * The tables in `public` — flags, feedback, profiles — are shared by every app
+ * on the database and carry an `app` column to tell the rows apart. Anything
+ * reading or writing them has to say which app it is, or it reads somebody
+ * else's queue and writes rows nobody can attribute. `restroom.moderation_queue`
+ * already filters on this; scripts that go to the base tables must do it
+ * themselves.
+ */
+export const APP = 'restroom-map'
+
 export async function withClient(fn, options) {
   const client = new pg.Client(dbConfig(options))
   await client.connect()
