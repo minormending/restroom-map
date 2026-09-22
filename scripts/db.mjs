@@ -165,9 +165,12 @@ async function hide(client, id, why) {
      where id=$1 and status<>'removed' returning name, status`, [id, why])
   if (rows.length === 0) throw new Error(`no such place: ${id}`)
 
+  // Logged as an already-resolved flag: this is the record that the place was
+  // taken down and by whom, not a request for somebody to look at it.
   await client.query(
-    `insert into flags (target_type, target_id, reason, resolved_at)
-     values ('bathroom', $1, $2, now())`, [id, `hidden by operator: ${why}`])
+    `insert into flags (app, target_type, target_id, message, resolved_at)
+     values ($1, 'bathroom', $2, $3, now())`,
+    [APP, id, `hidden by operator: ${why}`])
   console.log(`hidden: ${rows[0].name}\n  reason: ${why}\n  reversible with: db.mjs unhide ${id}`)
 }
 
@@ -236,10 +239,16 @@ async function resolve(client, id) {
   // The queue has two sources now. An id from it is a flag or a piece of
   // feedback and the person typing it has no reason to know which — the queue
   // does not say, and should not have to.
-  for (const [table, column] of [['flags', 'reason'], ['feedback', 'message']]) {
+  //
+  // Both carry the text in `message`, so the column no longer varies with the
+  // table. The `app` guard does though: these tables hold other apps' rows and
+  // an id is a uuid either way, so without it a typo could resolve something
+  // out of a queue this operator cannot see and will never think to check.
+  for (const table of ['flags', 'feedback']) {
     const { rows } = await client.query(
-      `update ${table} set resolved_at=now() where id=$1 and resolved_at is null
-       returning ${column} as what`, [id])
+      `update ${table} set resolved_at=now()
+       where id=$1 and app=$2 and resolved_at is null
+       returning message as what`, [id, APP])
     if (rows.length > 0) return console.log(`resolved: ${rows[0].what}`)
   }
   throw new Error(`nothing open in the queue with id ${id}`)
