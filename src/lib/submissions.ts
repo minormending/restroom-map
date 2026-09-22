@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { shared, supabase } from './supabase'
 import type { AccessKind, ChangingTableAccess, VenueType, WheelchairAccess } from './types'
 
 export interface NewPlace {
@@ -73,25 +73,52 @@ export interface Comment {
   author: string
 }
 
+/**
+ * Display names for a set of accounts, as a lookup.
+ *
+ * Its own query because `profiles` is in the shared `public` layer and
+ * `comments` is in `restroom`, and **PostgREST will not embed across
+ * schemas** — asking for `profiles(display_name)` from a request naming
+ * `restroom` answers PGRST200, "no relationship found", however real the
+ * foreign key is. One batched `in` rather than a lookup per row.
+ *
+ * A failure here returns an empty map rather than throwing. The note is the
+ * thing somebody came to read; the name above it is furniture, and losing the
+ * whole page of notes because the names could not be fetched is the wrong
+ * trade.
+ */
+async function displayNames(ids: string[]): Promise<Map<string, string>> {
+  const wanted = [...new Set(ids.filter(Boolean))]
+  if (!shared || wanted.length === 0) return new Map()
+
+  const { data, error } = await shared
+    .from('profiles')
+    .select('id, display_name')
+    .in('id', wanted)
+
+  if (error) return new Map()
+  return new Map((data ?? []).map((row) => [row.id as string, row.display_name as string]))
+}
+
 export async function fetchComments(bathroomId: string): Promise<Comment[]> {
   if (!supabase) return []
   const { data, error } = await supabase
     .from('comments')
-    .select('id, body, created_at, profiles(display_name)')
+    .select('id, body, created_at, user_id')
     .eq('bathroom_id', bathroomId)
     .order('created_at', { ascending: false })
     .limit(50)
 
   if (error) throw new Error(error.message)
-  return (data ?? []).map((row) => {
-    const profile = row.profiles as unknown as { display_name?: string } | null
-    return {
-      id: row.id as string,
-      body: row.body as string,
-      created_at: row.created_at as string,
-      author: profile?.display_name ?? 'Someone',
-    }
-  })
+
+  const rows = data ?? []
+  const names = await displayNames(rows.map((row) => row.user_id as string))
+  return rows.map((row) => ({
+    id: row.id as string,
+    body: row.body as string,
+    created_at: row.created_at as string,
+    author: names.get(row.user_id as string) ?? 'Someone',
+  }))
 }
 
 export async function addComment(

@@ -26,3 +26,21 @@ function connect() {
 export type RestroomClient = ReturnType<typeof connect>
 
 export const supabase: RestroomClient | null = USING_SEED_DATA ? null : connect()
+
+/**
+ * The same connection, addressed at the shared `public` layer.
+ *
+ * Not a second client — no extra session, no extra socket. `.schema()` returns
+ * a view of this one that sets a different profile header on the request.
+ *
+ * It exists because PostgREST resolves **strictly** inside the schema a request
+ * names, with no fallback: the client above says `restroom`, so a call to a
+ * shared function through it asks for `restroom.submit_feedback` and gets a
+ * PGRST202. Anything living in the shared layer — `submit_flag`,
+ * `submit_feedback`, `profiles` — has to be reached through this handle
+ * instead, and the name at the call site is the only thing that says which
+ * layer is being talked to.
+ */
+export const shared = supabase?.schema('public') ?? null
+
+export type SharedClient = NonNullable<typeof shared>

@@ -272,17 +272,26 @@ function context(client, state) {
 // --- the runner ------------------------------------------------------------
 
 /**
- * Every function body in `public`, as one hash. A gating test replaces
+ * Every function body this app can reach, as one hash. A gating test replaces
  * can_view_code() inside its transaction; if that ever outlived the
  * rollback it would put a paywall on every code on the live map, silently.
  * Comparing against the hash taken before the run catches it whichever way
  * the gate happens to be set today.
+ *
+ * Both schemas, and `restroom` is the one that matters. This read `public`
+ * alone until now, which was right when everything was there and quietly
+ * stopped being right when the app moved: can_view_code() and unlock_cost()
+ * are in `restroom`, and so is the replacement enableGating() installs, since
+ * it creates an unqualified name against a search path that starts there. The
+ * half of the canary meant to catch a leaked function body was watching a
+ * schema this app does not write to. `public` stays in because a shared-layer
+ * migration landing mid-run is still something to stop for.
  */
 async function schemaFingerprint(client) {
   const { rows } = await client.query(`
     select md5(string_agg(pg_get_functiondef(p.oid), '|' order by p.oid)) as hash
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public'`)
+    where n.nspname in ('restroom', 'public')`)
   return rows[0].hash
 }
 

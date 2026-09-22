@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { shared, supabase } from './supabase'
 import type { ReportKind } from './types'
 
 export interface ReportResult {
@@ -48,12 +48,14 @@ export async function submitFlag(
   reason: string,
   contactEmail?: string,
 ): Promise<void> {
-  if (!supabase) throw new Error('Reporting needs a database connection.')
+  if (!shared) throw new Error('Reporting needs a database connection.')
 
-  // Shared with every app in the database, hence p_app. The parameter is
-  // p_message rather than p_reason: this app predates map-kit, and the column
-  // was renamed when the kit was extracted from it.
-  const { error } = await supabase.rpc('submit_flag', {
+  // Shared with every app in the database, hence p_app and hence `shared`
+  // rather than the default client: the function is in `public` and a request
+  // naming `restroom` will not find it. The parameter is p_message rather than
+  // p_reason: this app predates map-kit, and the column was renamed when the
+  // kit was extracted from it.
+  const { error } = await shared.rpc('submit_flag', {
     p_app: 'restroom-map',
     p_target_type: 'bathroom',
     p_target_id: targetId,
