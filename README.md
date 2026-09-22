@@ -63,16 +63,28 @@ switches to live reads.
 
 ## Database
 
+This app owns the **`restroom` schema** of a database shared with other apps,
+over a `public` layer holding accounts, rate limiting and the moderation queue.
+That layer is not in this repo and has to exist first.
+[docs/shared-database.md](docs/shared-database.md) is the whole story, and it is
+worth ten minutes before touching any SQL here.
+
 SQL in `supabase/migrations/` runs in order — paste into the Supabase SQL editor
 or `supabase db push` if you have the CLI.
 
 | File | What it does |
 | --- | --- |
+| `0001_schema.sql` | Creates `restroom`, and registers the app |
+| `0002_imported.sql` | Every table, type, view and function, carried into it |
+| `0003_shared_rows.sql` | This app's flags and feedback, into the shared tables |
 | `20260911000001_init.sql` | Tables, enums, indexes |
 | `20260911000002_rls.sql` | Row-level security and its guard helpers |
 | `20260911000003_rpc.sql` | Confidence view, viewport query, code gate |
 | `20260911000004_grants.sql` | Data API grants (create the project with auto-expose OFF) |
 | `seed.sql` | 30 Lower Manhattan starter rows (generated) |
+
+The three `000x` files sort first and are the **newest** — the naming
+convention changed with them. Filename order is no longer historical order.
 
 ### Running SQL
 
@@ -149,11 +161,12 @@ pnpm test credits                  # suites matching a name
 node scripts/test.mjs --verbose    # list passing tests too
 ```
 
-Eight suites, 76 tests — `harness`, `credits`, `codes`, `access claims`,
-`hours`, `feedback`, `flags` and `write grants` — over the places where a
-silent bug costs somebody money, hands out a code they did not pay for, turns
-one person's opinion into a fact, or lets a write in through a door that was
-supposed to be shut.
+Nine suites, 92 tests — `harness`, `credits`, `codes`, `access claims`,
+`hours`, `feedback`, `flags`, `write grants` and `operator commands` — over the
+places where a silent bug costs somebody money, hands out a code they did not
+pay for, turns one person's opinion into a fact, lets a write in through a door
+that was supposed to be shut, or breaks the kill switch without anything
+saying so.
 
 [docs/testing.md](docs/testing.md) is the guided version: what each suite pins
 down, how to write one, and the `become()` / `asRole()` distinction that makes
@@ -172,10 +185,12 @@ places sit at Null Island so `submit_bathroom`'s 20m duplicate check cannot
 collide with anything real.
 
 That is the design. The enforcement is the canary that runs after every
-rollback. It counts rows carrying the test marker, and re-hashes every function
-body in `public` against the hash taken before the run. If either has moved,
-the run stops on that test rather than carrying on against a live map. Both
-paths have been checked by pointing them at things that do exist.
+rollback. It counts rows carrying the test marker — in this app's tables and in
+the shared flags and feedback, where an escapee would be an item in the real
+moderation queue — and re-hashes every function body in `public` against the
+hash taken before the run. If either has moved, the run stops on that test
+rather than carrying on against a live map. Both paths have been checked by
+pointing them at things that do exist.
 
 The function-body half matters more than it looks: the `codes` suite re-enables
 the M4 body of `can_view_code()` inside its transaction, because a gate that is
@@ -265,16 +280,21 @@ Business removal requests arrive through the same queue and sort to the top —
 
 ## Documentation
 
-[`docs/`](docs/) is the long form: the system shape, the data model, how
-something becomes a fact, who may write what, the front end, and what tests
-it. Written for somebody who has not seen this before, with the deeper detail
-folded into "Advanced" blocks.
+[`docs/`](docs/) is the long form, nine documents: the system shape, the data
+model, which half of the database belongs to everybody, how something becomes a
+fact, who may write what, the front end, what tests it, how it is operated, and
+what happens to a complaint. Written for somebody who has not seen this before,
+with the deeper detail folded into "Advanced" blocks.
 
-Start at [docs/README.md](docs/README.md). [docs/trust.md](docs/trust.md) is
-the one to read before changing anything, [docs/testing.md](docs/testing.md)
-is the one to read before trusting a green run, and
-[docs/triage.md](docs/triage.md) is what happens to a complaint after somebody
-sends one.
+Start at [docs/README.md](docs/README.md). Then:
+
+| read this first if | |
+| --- | --- |
+| you are about to change anything | [docs/trust.md](docs/trust.md) — the rules that decide what the map is allowed to say |
+| you are about to touch SQL | [docs/shared-database.md](docs/shared-database.md) — half the tables are not this repo's |
+| a green run is about to convince you | [docs/testing.md](docs/testing.md) — what each system does and does not see |
+| something is live and wrong | [docs/operations.md](docs/operations.md) — deploys, build tags, and what to check |
+| a complaint arrived | [docs/triage.md](docs/triage.md) |
 
 ## Importing
 
@@ -405,7 +425,7 @@ these need a person to walk somewhere; the rest need a decision or a payment.
   | places | 1,038 |
   | recording any of the six | **0** |
   | claims | 0 |
-  | accounts | 1 |
+  | accounts | 2 |
 
   The six are an adult changing bench, grab bars, turning space, whether the
   accessible stall is locked, a sink in the cubicle, a shelf. No dataset
