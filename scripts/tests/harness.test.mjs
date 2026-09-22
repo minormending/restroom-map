@@ -72,4 +72,24 @@ suite('harness', (test) => {
     eq(await t.val('select count(*) from bathrooms where name like $1',
       [`TEST/harness.invalid/%`]), 2, 'the rows exist while the test is running')
   })
+
+  test('what the operator suite writes leaves nothing behind either', async (t) => {
+    // flags and feedback are shared tables, and the operator suite writes to
+    // both. A row that outlived a rollback would not read as stray test data —
+    // it would be an item in the real moderation queue, phrased like a real
+    // report, that a person has to open and dismiss. Same contract as above:
+    // the assertion is the canary, after the rollback.
+    const place = await t.place({ owner: await t.newUser() })
+
+    await t.become(await t.anonVisitor())
+    await t.val('select submit_feedback($1,$2,$3,$4,$5)',
+      ['restroom-map', 'bug', 'harness.invalid a report nobody should ever read', null, 'v99'])
+    await t.val('select submit_flag($1,$2,$3,$4,$5)',
+      ['restroom-map', 'bathroom', place.id, 'harness.invalid a flag nobody should ever read', null])
+
+    eq(await t.val('select count(*) from feedback where message like $1',
+      ['%harness.invalid%']), 1, 'the feedback row exists while the test is running')
+    eq(await t.val('select count(*) from flags where message like $1',
+      ['%harness.invalid%']), 1, 'and the flag does too')
+  })
 })

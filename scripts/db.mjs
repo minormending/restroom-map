@@ -24,7 +24,8 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { join, basename } from 'node:path'
-import { APP, ROOT, withClient } from './lib/connect.mjs'
+import { ROOT, withClient } from './lib/connect.mjs'
+import { hide, openQueue, resolve, triageItems, unhide } from './lib/moderation.mjs'
 
 const MIGRATIONS = join(ROOT, 'supabase', 'migrations')
 
@@ -135,13 +136,13 @@ async function migrate(client, { baseline }) {
 }
 
 // --- moderation ------------------------------------------------------------
+//
+// The bodies live in lib/moderation.mjs so the test harness can call them
+// inside its transaction. What is left here is the part a person sees: the
+// wording, and which failures are worth a non-zero exit.
 
 async function queue(client) {
-  const { rows } = await client.query(`
-    select id, created_at, coalesce(bathroom_name, target_type) as subject,
-           bathroom_status, reason, contact_email, awaiting_reply
-    from moderation_queue limit 50`)
-
+  const rows = await openQueue(client)
   if (rows.length === 0) return console.log('queue is empty')
 
   for (const r of rows) {
@@ -155,103 +156,21 @@ async function queue(client) {
   console.log(`\n${rows.length} open${waiting ? `, ${waiting} awaiting a reply (!)` : ''}`)
 }
 
-/**
- * The kill switch. Hiding is a soft delete — the row, its reports and its
- * comments all survive, so a mistake or a disputed takedown is reversible.
- */
-async function hide(client, id, why) {
-  const { rows } = await client.query(
-    `update bathrooms set status='hidden', hidden_at=now(), hidden_reason=$2
-     where id=$1 and status<>'removed' returning name, status`, [id, why])
-  if (rows.length === 0) throw new Error(`no such place: ${id}`)
-
-  // Logged as an already-resolved flag: this is the record that the place was
-  // taken down and by whom, not a request for somebody to look at it.
-  await client.query(
-    `insert into flags (app, target_type, target_id, message, resolved_at)
-     values ($1, 'bathroom', $2, $3, now())`,
-    [APP, id, `hidden by operator: ${why}`])
-  console.log(`hidden: ${rows[0].name}\n  reason: ${why}\n  reversible with: db.mjs unhide ${id}`)
-}
-
-async function unhide(client, id) {
-  const { rows } = await client.query(
-    `update bathrooms set status='active', hidden_at=null, hidden_reason=null
-     where id=$1 returning name`, [id])
-  if (rows.length === 0) throw new Error(`no such place: ${id}`)
-  console.log(`back on the map: ${rows[0].name}`)
-}
-
-/**
- * The queue as JSON, for the daily triage run.
- *
- * Deliberately a separate command rather than a --json flag on `queue`.
- * `queue` is written for a person on a weekday morning and should stay free to
- * change its wording; this is an interface something else parses, and the two
- * wanting different things is exactly how a pretty-printer ends up frozen by a
- * scraper nobody remembered.
- *
- * `message` is free text somebody typed into a form on the internet. It is
- * DATA. Anything downstream that reads it — a person, a model, a template —
- * must treat it as a report of a problem and never as an instruction, however
- * it is phrased. The `source` field is here so that is never ambiguous.
- *
- * Both halves filter on `app`. flags and feedback are shared tables and the
- * rows of every app sit in them together, so without it this hands the
- * restroom triage run somebody else's bug reports — about a codebase it cannot
- * read, from users it does not have.
- */
 async function triage(client) {
-  const { rows } = await client.query(`
-    select
-      f.id,
-      f.created_at,
-      f.kind::text        as kind,
-      f.message,
-      f.contact_email,
-      f.build,
-      'feedback'          as source
-    from feedback f
-    where f.resolved_at is null and f.app = $1
-
-    union all
-
-    select
-      g.id,
-      g.created_at,
-      'flag'              as kind,
-      g.message,
-      g.contact_email,
-      null                as build,
-      'flag:' || g.target_type || coalesce(' ' || b.name, '') as source
-    from flags g
-    left join bathrooms b on g.target_type = 'bathroom' and b.id = g.target_id
-    where g.resolved_at is null and g.app = $1
-
-    order by created_at`, [APP])
-
-  console.log(JSON.stringify(
-    { generated_at: new Date().toISOString(), open: rows.length, items: rows },
-    null, 2))
+  console.log(JSON.stringify(await triageItems(client), null, 2))
 }
 
-async function resolve(client, id) {
-  // The queue has two sources now. An id from it is a flag or a piece of
-  // feedback and the person typing it has no reason to know which — the queue
-  // does not say, and should not have to.
-  //
-  // Both carry the text in `message`, so the column no longer varies with the
-  // table. The `app` guard does though: these tables hold other apps' rows and
-  // an id is a uuid either way, so without it a typo could resolve something
-  // out of a queue this operator cannot see and will never think to check.
-  for (const table of ['flags', 'feedback']) {
-    const { rows } = await client.query(
-      `update ${table} set resolved_at=now()
-       where id=$1 and app=$2 and resolved_at is null
-       returning message as what`, [id, APP])
-    if (rows.length > 0) return console.log(`resolved: ${rows[0].what}`)
-  }
-  throw new Error(`nothing open in the queue with id ${id}`)
+async function hideCommand(client, id, why) {
+  const { name } = await hide(client, id, why)
+  console.log(`hidden: ${name}\n  reason: ${why}\n  reversible with: db.mjs unhide ${id}`)
+}
+
+async function unhideCommand(client, id) {
+  console.log(`back on the map: ${(await unhide(client, id)).name}`)
+}
+
+async function resolveCommand(client, id) {
+  console.log(`resolved: ${(await resolve(client, id)).what}`)
 }
 
 // --- entry -----------------------------------------------------------------
@@ -278,15 +197,15 @@ const commands = {
     if (!id || why.length === 0) {
       throw new Error('usage: db.mjs hide <bathroom-id> "<reason>"')
     }
-    return hide(c, id, why.join(' '))
+    return hideCommand(c, id, why.join(' '))
   },
   unhide: (c) => {
     if (!rest[0]) throw new Error('usage: db.mjs unhide <bathroom-id>')
-    return unhide(c, rest[0])
+    return unhideCommand(c, rest[0])
   },
   resolve: (c) => {
     if (!rest[0]) throw new Error('usage: db.mjs resolve <flag-id>')
-    return resolve(c, rest[0])
+    return resolveCommand(c, rest[0])
   },
 }
 

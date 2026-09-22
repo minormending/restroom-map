@@ -49,6 +49,15 @@ const filters = args.filter((a) => !a.startsWith('-'))
 
 function context(client, state) {
   const t = {
+    /**
+     * The transaction every helper below runs in.
+     *
+     * Exposed for the operator commands in lib/moderation.mjs, which take a
+     * client because they cannot be tested any other way — see the note at the
+     * top of that file. Prefer t.sql/one/val for everything else.
+     */
+    client,
+
     /** Rows from one statement. */
     async sql(text, params) {
       return (await client.query(text, params)).rows
@@ -279,11 +288,17 @@ async function schemaFingerprint(client) {
 
 /** Nothing a test wrote or replaced may outlive its rollback. */
 async function canary(client, baseline) {
+  // flags and feedback are watched because the operator suite writes to them,
+  // and they are shared tables: a row that escaped a rollback would not just be
+  // stray test data, it would be an item in the real moderation queue, phrased
+  // like a real report, that a person has to read and dismiss.
   const { rows } = await client.query(
     `select (select count(*) from auth.users where email like $1)     as users,
             (select count(*) from bathrooms where name like $2)       as places,
-            (select count(*) from bathrooms where import_source = $3) as imports`,
-    [`%@${MARKER}`, `TEST/${MARKER}/%`, 'test-harness'])
+            (select count(*) from bathrooms where import_source = $3) as imports,
+            (select count(*) from flags where message like $4)        as flags,
+            (select count(*) from feedback where message like $4)     as feedback`,
+    [`%@${MARKER}`, `TEST/${MARKER}/%`, 'test-harness', `%${MARKER}%`])
 
   const leaked = Object.entries(rows[0]).filter(([, n]) => Number(n) > 0)
   if (leaked.length > 0) {
