@@ -10,7 +10,12 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest, and pinned to the same image deploy.yml
+    # uses — a check that passes on a different machine from the one that ships
+    # the build is worth less. The label migrates to Ubuntu 26 from 19 October
+    # 2026. The cost of pinning is that this line is now somebody's job:
+    # nothing upgrades it but a person, and the two files have to move together.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 

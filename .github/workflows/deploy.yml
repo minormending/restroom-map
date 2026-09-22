@@ -17,7 +17,11 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest. The label migrates to Ubuntu 26 from
+    # 19 October 2026, and an image change arriving on its own is the kind that
+    # breaks a deploy on a day nobody touched the deploy. The cost is that this
+    # line is now somebody's job: nothing upgrades it but a person.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
         with:
@@ -56,7 +60,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
