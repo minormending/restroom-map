@@ -10,28 +10,40 @@ hole.
 ```mermaid
 graph TB
     req["a request from the browser"]
+    u{"schema USAGE?"}
     g{"table GRANT?"}
     p{"RLS policy?"}
     f["security definer function"]
     t[("table")]
 
-    req -->|"direct select/insert"| g
+    req -->|"direct select/insert"| u
+    u -->|no| deny0["42501<br/>permission denied for schema"]
+    u -->|yes| g
     g -->|no| deny1["42501<br/>permission denied for table"]
     g -->|yes| p
     p -->|no| deny2["42501<br/>violates row-level security"]
     p -->|yes| t
     req -->|"rpc()"| f
-    f -->|"runs as owner:<br/>skips both"| t
+    f -->|"runs as owner:<br/>skips all three"| t
 ```
 
 | layer | asks | answers |
 | --- | --- | --- |
+| **schema usage** | may this role see this schema at all? | `permission denied for schema` |
 | **grant** | may this role touch this table at all? | `permission denied for table` |
 | **RLS policy** | may this role touch *this row*? | `violates row-level security policy` |
 | **function** | neither — `security definer` runs as the owner | its own rules |
 
-Both refusals are error code **42501**. That collision is not academic; see the
-advanced block below.
+All three refusals are error code **42501**. That collision is not academic;
+see the advanced block below.
+
+The schema layer is new, and it arrived with a lesson attached. When this app's
+tables were carried into `restroom`, the import brought tables, types,
+functions, views, indexes, policies and triggers — and **no `GRANT` statements
+at all**. Every RLS policy was present and correct, and the app could not read
+a single row. A policy cannot help a role that may not reach the table, and a
+role that may not reach the schema never gets as far as the table. Migration
+028 is the repair.
 
 ## The rule
 
@@ -47,10 +59,44 @@ left to be discovered:
 | `comments` | INSERT, DELETE to authenticated | the client really does write here directly, so its policy is the access control |
 | everything else | none | a function owns it |
 
-`profiles` is read-only to the API roles too. Its display name is derived by
-the signup trigger and there is no function to change it — an editor means
-adding `set_display_name()` and granting execute on **that**, not restoring the
-table grant.
+The list of tables that test covers got shorter with the move to a shared
+database: `flags`, `feedback` and `profiles` are the shared layer's now, and its
+migrations own their grants and their tests. What `grants.test.mjs` checks is
+what this app actually owns — `bathrooms`, `bathroom_codes`, `reports` and
+`access_claims`, plus the `comments` exception. The rule did not change; the
+list of things it applies to here did.
+
+`profiles` is read-only to the API roles too — `SELECT` and nothing else,
+verified live. Its display name is derived by the signup trigger and there is
+no function to change it, so an editor means adding `set_display_name()` in the
+shared layer and granting execute on **that**, not restoring the table grant.
+
+<details>
+<summary><b>Advanced</b> — the rule is currently broken, in a way nothing can reach</summary>
+
+Migration 028 re-granted everything after the move, from a generated list, and
+that list is wider than the hand-written one it replaced. Every table in
+`restroom` now carries `TRUNCATE`, `REFERENCES`, `TRIGGER` and `MAINTAIN` for
+`anon` and `authenticated`, including the four the rule above is about. The
+file it effectively replaced, `20260911000004_grants.sql`, granted `select`,
+`insert` and `delete` and nothing else, each one with a comment saying why.
+
+TRUNCATE is a write grant on a table whose entire design is that only a
+function may write to it.
+
+It is not reachable today: PostgREST maps HTTP onto SELECT, INSERT, UPDATE,
+DELETE and RPC, and never issues a TRUNCATE. So this is not the `flags` hole
+below repeating itself — there is no request that gets there. It is a privilege
+nobody decided to grant, sitting on the tables most carefully closed, and it
+stayed invisible because `grants.test.mjs` filters
+`privilege_type in ('INSERT','UPDATE','DELETE')` and TRUNCATE is not one of the
+three.
+
+Two repairs, and the second is the one that lasts: revoke the four, and make
+the test an **allowlist** — "nothing but SELECT, plus the listed exceptions" —
+so the next generated grant list cannot quietly add a fifth.
+
+</details>
 
 <details>
 <summary><b>Advanced</b> — the hole this rule came from</summary>
@@ -112,17 +158,26 @@ sequenceDiagram
     end
 ```
 
-| function | window | limit |
-| --- | --- | --- |
-| `submit_report` | 1 hour | 40 |
-| `submit_bathroom` | 1 day | 5 (in the RLS policy, via `daily_submissions`) |
-| `submit_access_claim` | 1 hour | 60 |
-| `submit_flag` | 1 day | 10 |
-| `submit_feedback` | 1 day | 5 |
+| function | window | limit | bucket key |
+| --- | --- | --- | --- |
+| `submit_report` | 1 hour | 40 | `ip:<fp>` |
+| `submit_report`, per place and kind | 1 day | 1 | `rpt:<fp>:<place>:<kind>` |
+| `submit_bathroom` | 1 day | 5 (in the RLS policy, via `daily_submissions`) | — |
+| `submit_access_claim` | 1 hour | 60 | `claim:<fp>` |
+| `public.submit_flag` | 1 day | 10 | `restroom-map:flag:<fp>` |
+| `public.submit_feedback` | 1 day | 5 | `restroom-map:feedback:<fp>` |
 
-`client_fingerprint()` and `rl_take()` are **revoked from the API roles**, so a
-client cannot read or spend somebody else's bucket. The salt lives in
-`rl_salt()`, which they also cannot execute.
+`client_fingerprint()`, `rl_take()` and the `rate_limit` table are all in the
+shared layer now, which makes the last column worth reading. The two shared
+functions namespace their key by the calling app; this app's own functions,
+written when it was alone in the database, do not. Nothing collides today —
+`ip:`, `claim:` and `rpt:` are shapes no other app uses yet — but **a new
+limit should take an app-prefixed key**, because the table is one table and the
+failure would be one app silently spending another's allowance.
+
+All three are **revoked from the API roles**, so a client cannot read or spend
+somebody else's bucket. The salt lives in `rl_salt()`, which they also cannot
+execute.
 
 <details>
 <summary><b>Advanced</b> — why the fingerprint is a hash and what it costs</summary>
@@ -183,3 +238,10 @@ project runs as `service_role`.
 - **Do not put a secret in the client.** There is nowhere to put one.
 - **Do not commit `.env`.** It holds the database password, which bypasses RLS
   entirely. It is gitignored; keep it that way.
+- **Do not grant anything on `public`.** That schema belongs to the shared
+  layer and to every other app in the database — see
+  [shared-database.md](shared-database.md). A grant made here for this app's
+  convenience is a grant made on everybody's accounts table.
+- **Do not query `flags` or `feedback` without `app = 'restroom-map'`.** Not a
+  privilege question but the same shape of mistake: the rows of several apps
+  are in one table, and reading all of them is one forgotten predicate away.

@@ -5,6 +5,11 @@
 There is no server. A static bundle on GitHub Pages talks straight to Postgres
 through Supabase, and every rule lives in the database.
 
+That database is shared with other apps. This one owns the `restroom` schema,
+over a `public` layer holding accounts, rate limiting and the moderation queue
+— see [shared-database.md](shared-database.md), which is the newest and least
+obvious thing here.
+
 ```mermaid
 graph TB
     subgraph browser["Browser"]
@@ -20,7 +25,10 @@ graph TB
     subgraph supa["Supabase"]
         rest["PostgREST"]
         auth["Auth (Google OAuth)"]
-        pg[("Postgres + PostGIS<br/>RLS on every table")]
+        subgraph pg["Postgres + PostGIS - RLS on every table"]
+            rm[("restroom<br/>this app's tables")]
+            pub[("public<br/>profiles, rate limiting,<br/>the moderation queue")]
+        end
     end
 
     carto["CARTO<br/>basemap tiles"]
@@ -31,8 +39,10 @@ graph TB
     app <--> ls
     app -->|"rpc / select"| rest
     app -->|"sign in"| auth
-    rest --> pg
-    auth --> pg
+    rest --> rm
+    rest --> pub
+    auth --> pub
+    rm --> pub
     app -->|"tiles"| carto
     sw -.->|"cached"| carto
     app -->|"addresses"| photon
@@ -133,16 +143,29 @@ discards the position. There is no column anywhere holding where anybody was.
 | `submit_code` | authenticated | supersedes the previous code |
 | `submit_report` | anon + authenticated | 40/hour per address, plus per-place |
 | `submit_access_claim` | authenticated | 60/hour |
-| `submit_flag` | anon + authenticated | 10/day |
-| `submit_feedback` | anon + authenticated | 5/day |
 | `unlock_code` | authenticated | costs 2 credits |
 | `get_code` | anon + authenticated | returns `locked` rather than the code |
 | `bathrooms_in_view` | anon + authenticated | 300 rows |
+| `public.submit_flag` | anon + authenticated | 10/day |
+| `public.submit_feedback` | anon + authenticated | 5/day |
+
+The last two are **shared**: they live in `public`, serve every app in the
+database, and take a `p_app` naming the caller. Everything above them is this
+app's, in `restroom`. A client reaches a shared one with
+`supabase.schema('public').rpc(…)`, because the default client is configured
+for `restroom` and PostgREST does not fall back —
+[shared-database.md](shared-database.md) has the rest, including the two
+callers that currently get this wrong.
 
 `client_fingerprint()` and `rl_take()` are revoked from everybody but the
 owner, so a client cannot read or spend somebody else's bucket. The
 fingerprint is a salted one-way hash of the request IP; the salt lives in a
-function the API roles cannot execute.
+function the API roles cannot execute. All three are in the shared layer now,
+which makes the bucket **key** worth a look: the shared functions namespace
+theirs (`restroom-map:feedback:<fingerprint>`), and this app's own functions do
+not (`ip:`, `claim:`, `rpt:`). Unprefixed keys sit in one table with every other
+app's, so a second app using the same convention would share the bucket. Give a
+new one an app-prefixed key.
 
 </details>
 

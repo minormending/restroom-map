@@ -8,7 +8,7 @@ graph TB
     subgraph repo["this repo"]
         types["pnpm typecheck<br/>tsc, no bundle"]
         lint["pnpm lint<br/>oxlint"]
-        db["pnpm test<br/>76 tests against Postgres"]
+        db["pnpm test<br/>92 tests against Postgres"]
         shots["scripts/shots.mjs<br/>pictures for a human"]
     end
 
@@ -45,7 +45,7 @@ pnpm test credits                  # suites whose name contains "credits"
 node scripts/test.mjs --verbose    # list passing tests too
 ```
 
-**76 tests in 8 suites**, across seven files in `scripts/tests/`.
+**92 tests in 9 suites**, across eight files in `scripts/tests/`.
 
 ### Why it runs against the real database
 
@@ -107,8 +107,15 @@ const MARKER = 'harness.invalid'
 ```
 
 **Half one: row counts.** Users whose email ends `@harness.invalid`, bathrooms
-named `TEST/harness.invalid/%`, and bathrooms with `import_source =
-'test-harness'`. Any of them above zero and the run stops.
+named `TEST/harness.invalid/%`, bathrooms with `import_source =
+'test-harness'`, and — since the operator suite started writing to them — flags
+and feedback whose message carries the marker. Any of them above zero and the
+run stops.
+
+The two shared tables are watched for a sharper reason than the others. A row
+that escaped a rollback there would not merely be stray test data in a table
+nobody looks at; it would be an item in the **real moderation queue**, phrased
+like a real report, that a person has to read and dismiss.
 
 **Half two: a schema fingerprint.** An md5 of `pg_get_functiondef` across every
 function in `public`, ordered by oid, taken once before the run and re-compared
@@ -125,13 +132,26 @@ The hash alone would miss data, and it would also miss a migration applied by
 another process mid-run — which is possible, because this is pointed at the
 database a person might be migrating from another terminal.
 
+**And half two is currently watching the wrong schema.** `schemaFingerprint()`
+still reads `where n.nspname = 'public'`, but every function it exists to
+protect moved to `restroom` in September 2026 — its own error message names
+`can_view_code()` and `unlock_cost()`, and both are now unhashed. So is
+`enableGating()`'s replacement, which does a `create or replace` on an
+unqualified name against a search path that starts at `restroom`.
+
+What it hashes today is the seven shared functions in `public`, which no test
+here touches. The row-count half still works, and the fingerprint would still
+catch somebody migrating the *shared* layer mid-run. But the specific leak it
+was written for — a replaced function body outliving its rollback — is not
+covered at the moment. One line: hash `restroom`, or both.
+
 </details>
 
-### The eight suites
+### The nine suites
 
 | suite | file | tests | what it pins down |
 | --- | --- | --- | --- |
-| `harness` | `harness.test.mjs` | 5 | that the test kit itself does what it claims |
+| `harness` | `harness.test.mjs` | 6 | that the test kit itself does what it claims |
 | `credits` | `credits.test.mjs` | 19 | the ledger — escrow, signup bonus, clawbacks, the daily trickle |
 | `codes` | `codes.test.mjs` | 16 | `can_view_code`, unlock pricing, paying twice, reading others' unlocks |
 | `access claims` | `access.test.mjs` | 13 | how two people agreeing turns an answer into a fact |
@@ -139,8 +159,70 @@ database a person might be migrating from another terminal.
 | `feedback` | `feedback.test.mjs` | 9 | the complaint path, its rate limit and its privacy |
 | `flags` | `flags.test.mjs` | 7 | takedown requests, and that nobody can read the queue |
 | `write grants` | `grants.test.mjs` | 4 | that every table with a submit function refuses writes from outside it |
+| `operator commands` | `operator.test.mjs` | 15 | `db.mjs queue \| triage \| hide \| unhide \| resolve` — the SQL a person runs by hand |
 
-Read `harness.test.mjs` first. It is five tests and it explains the kit.
+Read `harness.test.mjs` first. It is six tests and it explains the kit.
+
+Four of them changed shape when the database became a shared one. `flags`,
+`feedback` and `profiles` belong to the shared layer now, so `grants.test.mjs`
+scans `restroom` and asserts only over the tables this app owns, and the two
+complaint suites exercise shared functions that take a `p_app`. See
+[shared-database.md](shared-database.md).
+
+`operator commands` is the newest and it exists because of a specific
+embarrassment. The move renamed `flags.reason` to `message` and added a
+`NOT NULL app` column; `moderation_queue` was updated for it and **three
+commands that go to the base tables instead were not**. `db.mjs triage` failed
+on every run for six days, and `hide` — the kill switch — would have taken a
+place off the map and then failed to write the record of why. The suite was
+green throughout, because it covered the RPCs and the view and nothing ran the
+operator SQL at all.
+
+<details>
+<summary><b>Advanced</b> — why those commands had to be moved to be testable</summary>
+
+They were bodies inside `scripts/db.mjs`, reachable only by running the
+command. A test cannot do that: every test lives in a transaction that is
+always rolled back, a subprocess opens a second connection that cannot see
+uncommitted rows, and committing to make them visible would trip the canary and
+stop the run.
+
+So the SQL moved to [`scripts/lib/moderation.mjs`](../scripts/lib/moderation.mjs)
+as functions over a client, and `db.mjs` kept the wording and the exit codes.
+Nothing in that file prints. It is worth copying as a shape: **the reason this
+code was untested was that it was welded to its command line**, and the fix was
+a seam, not a mock.
+
+The suite also plants rows belonging to a neighbouring app — `app` is a foreign
+key to `apps.slug`, so the name cannot be invented — and asserts they never
+appear in this app's queue. That is the half a column rename would not have
+caught.
+
+</details>
+
+<details>
+<summary><b>Advanced</b> — what these suites cannot see, and what it cost</summary>
+
+Every one of them talks to Postgres over a connection whose search path is
+`restroom, public, extensions`. That is the right setup for testing a function,
+and it means **no test here exercises a call the way the browser makes it.**
+
+The browser does not have a search path. It has a schema — one, set on the
+client — and PostgREST resolves strictly inside it with no fallback. So
+`select submit_feedback(…)` in a test resolves to the shared function and
+passes, while `supabase.rpc('submit_feedback', …)` in the app looks for
+`restroom.submit_feedback`, does not find it, and fails.
+
+That is not hypothetical: it is the state of the deployed bundle as this is
+written. The feedback form and the flag form have both been broken since the
+move, with 76 tests green over the top of them, because the database is fine
+and the routing is not.
+
+The gap is a whole class, not one bug. Something should assert that every
+`supabase.rpc(name)` in `src/lib/` names a function that exists in the schema
+that client is configured for.
+
+</details>
 
 ### Writing one
 
@@ -298,7 +380,11 @@ graph LR
 | `a11y` | axe-core at `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` — contrast, ARIA misuse, unlabelled controls | no |
 | `health` | no failed requests or 404s, no console errors, and the page has a `<title>`, a `lang`, a viewport meta and at least one `h1` | no |
 
-Viewports: desktop 1280×800, tablet (iPad gen 7), mobile (iPhone 13).
+Viewports: desktop 1280×800, tablet (iPad gen 7), mobile (iPhone 13). There is
+a fourth project, `touch` (Galaxy Tab S4 — Chromium *with* fingers, the only
+one that can dispatch two simultaneous contacts), but it is opt-in per state
+and no state of this app asks for it. That is why the arithmetic is 3 and not
+4.
 
 The three that need no baseline are the interesting ones. A visual diff only
 tells you something *changed*; those three tell you something is *wrong* on a
@@ -448,6 +534,14 @@ not fail the job.
 `.github/workflows/ci.yml`, job `check`, on `pull_request`: install, typecheck,
 lint, build. That is all of it.
 
+Both workflows pin `runs-on: ubuntu-24.04` rather than `ubuntu-latest`, and to
+the *same* image — a check that passes on a different machine from the one that
+ships the build is worth less. The `ubuntu-latest` label migrates to Ubuntu 26
+from 19 October 2026, and an image change arriving on its own is the kind that
+breaks a deploy on a day nobody touched the deploy. The cost is that the two
+lines are now somebody's job: nothing upgrades them but a person, and they have
+to move together.
+
 The build step matters more than it looks — it is the same build Pages gets,
 with `BASE_PATH` derived the way `deploy.yml` derives it, so a bundle that
 cannot be produced fails at review rather than after the merge that deploys it.
@@ -473,6 +567,10 @@ Say it plainly, so nobody assumes otherwise:
   looking at a screenshot.
 - **No end-to-end test of a real write.** The database suite exercises the RPCs
   directly; the audit runs against fixtures and can never reach the real
-  database. Nothing drives a browser through a genuine submission.
+  database. Nothing drives a browser through a genuine submission. That is the
+  hole the broken feedback and flag forms fell through — see the fold above.
+- **Nothing checks that a client call names a function the client can reach.**
+  The suite proves the function is right; the audit proves the screen is right;
+  the wiring between them is proven by nobody.
 - **The concurrency guard in `unlock_code()`**, for the reason in the fold above.
 - **Anything on a screen nobody has registered**, in either tool.
