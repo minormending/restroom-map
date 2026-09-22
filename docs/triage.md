@@ -46,6 +46,20 @@ Every path ends at a person. Nothing merges, nothing sends, nothing resolves.
 Both appear in `moderation_queue`, so `pnpm db:queue` shows everything and the
 existing weekday moderation task keeps working unchanged.
 
+Both tables are **shared** with the other apps in the database now, and carry an
+`app` column. The view and every operator command filter on it, so this queue is
+this app's; a query written by hand against the base tables is one forgotten
+predicate away from triaging somebody else's complaints. See
+[shared-database.md](shared-database.md).
+
+> **The intake is broken as this is written** (22 September 2026). The feedback
+> form and the flag link both call a shared function through a client
+> configured for this app's schema, and PostgREST does not fall back, so every
+> submission is refused before it reaches a table. No row has arrived since the
+> move that caused it. Until it is fixed, an empty queue proves nothing about
+> whether anybody wrote in. Detail in
+> [shared-database.md](shared-database.md).
+
 ## What runs it
 
 A scheduled task, daily, invoking the
@@ -58,6 +72,12 @@ the thing it acts on.
 node scripts/db.mjs triage    # what it reads
 pnpm db:queue                 # the same thing, for a person
 ```
+
+Both are covered by the `operator commands` suite. They were not until
+September 2026, and in the gap `triage` spent six days failing on every run
+against a column the shared tables had renamed —
+[testing.md](testing.md) has that story, because the lesson is about where the
+code lived rather than about the rename.
 
 ## The rule that matters most
 
