@@ -1,5 +1,5 @@
 import { buildLabel } from './build'
-import { supabase } from './supabase'
+import { shared } from './supabase'
 
 export const FEEDBACK_KINDS = ['bug', 'idea', 'complaint'] as const
 export type FeedbackKind = (typeof FEEDBACK_KINDS)[number]
@@ -23,11 +23,13 @@ export interface Feedback {
  * something looks wrong, and this saves asking.
  */
 export async function sendFeedback({ kind, message, email }: Feedback): Promise<void> {
-  if (!supabase) throw new Error('Sending feedback needs a database connection.')
+  if (!shared) throw new Error('Sending feedback needs a database connection.')
 
   // submit_feedback lives in `public` and serves every app in the database, so
-  // it needs to be told which one is calling.
-  const { error } = await supabase.rpc('submit_feedback', {
+  // it needs to be told which one is calling — and it has to be reached through
+  // `shared`, because the default client names `restroom` and PostgREST does
+  // not fall back.
+  const { error } = await shared.rpc('submit_feedback', {
     p_app: 'restroom-map',
     p_kind: kind,
     p_message: message,
