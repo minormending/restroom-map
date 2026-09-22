@@ -49,6 +49,49 @@ const OPEN = [
   ['comments', 'DELETE', 'and deletes its own'],
 ]
 
+/**
+ * Everything an API role is allowed to hold in this schema, as an allowlist.
+ *
+ * Stated this way round on purpose. The checks below used to name the three
+ * privileges worth worrying about — INSERT, UPDATE, DELETE — and ask whether
+ * any had appeared, which is only as good as that list of three. Migration 028
+ * re-granted the schema from a generated list and handed anon TRUNCATE,
+ * REFERENCES, TRIGGER and MAINTAIN on every table in it, including the four
+ * above. The suite was green: none of the four was one of the three.
+ *
+ * So: nothing but SELECT, plus the exceptions in OPEN. A privilege nobody has
+ * thought of yet fails this by default, which is the only version of this test
+ * that could have caught the thing that got past it.
+ */
+const ALLOWED = new Set(['SELECT'])
+
+/**
+ * Roles the app can actually arrive as, plus service_role.
+ *
+ * service_role is in the list because nothing in this project runs as it —
+ * docs/security.md says so — and a role nobody uses quietly accumulating
+ * privileges is exactly how that sentence stops being true.
+ */
+const API_ROLES = ['anon', 'authenticated', 'service_role']
+
+/**
+ * The real ACL, not information_schema's view of it.
+ *
+ * information_schema.role_table_grants does not report MAINTAIN at all, so a
+ * check built on it is blind to one of the four privileges 028 handed out —
+ * which is worth knowing before writing the next permission test on top of it.
+ * aclexplode reads what Postgres actually stored.
+ */
+const acl = (t, table) =>
+  t.sql(`select r.rolname as grantee, a.privilege_type
+         from pg_class c
+         join pg_namespace n on n.oid = c.relnamespace
+         cross join lateral aclexplode(c.relacl) a
+         join pg_roles r on r.oid = a.grantee
+         where n.nspname = 'restroom' and c.relname = $1
+           and r.rolname = any($2)
+         order by r.rolname, a.privilege_type`, [table, API_ROLES])
+
 const grants = (t, table) =>
   t.sql(`select grantee, privilege_type from information_schema.role_table_grants
          where table_schema = 'restroom' and table_name = $1
@@ -63,6 +106,50 @@ suite('write grants', (test) => {
       eq(rows.length, 0,
         `${table} should have no write grant, found ${rows.map((r) => `${r.grantee}:${r.privilege_type}`).join(', ')}`)
     }
+  })
+
+  test('the API roles hold nothing but SELECT, plus the listed exceptions', async (t) => {
+    // Every relation in the schema, not just the closed four: a view carrying
+    // TRUNCATE is harmless and a table carrying it is not, and the way to stop
+    // having to tell them apart is to allow neither.
+    const relations = await t.sql(
+      `select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = 'restroom' and c.relkind in ('r','v','m','p')
+        order by c.relname`)
+
+    ok(relations.length > 0, 'found no relations in restroom — the query is wrong, not the schema')
+
+    const allowed = new Set(OPEN.map(([tbl, priv]) => `${tbl}/authenticated/${priv}`))
+    const extra = []
+
+    for (const { relname } of relations) {
+      for (const row of await acl(t, relname)) {
+        const held = `${relname}/${row.grantee}/${row.privilege_type}`
+        if (ALLOWED.has(row.privilege_type) || allowed.has(held)) continue
+        extra.push(held)
+      }
+    }
+
+    eq(extra.join('\n      '), '',
+      `these roles hold a privilege nothing asked them to have.\n` +
+      `      Add it to OPEN with a reason, or revoke it`)
+  })
+
+  test('service_role holds nothing in this schema at all', async (t) => {
+    // Separate from the check above because the reason is different: this is
+    // not "no writes", it is "no reason to be here". Nothing in this project
+    // connects as service_role, and the moderation path runs as the owner.
+    const rows = await t.sql(
+      `select c.relname, a.privilege_type
+       from pg_class c
+       join pg_namespace n on n.oid = c.relnamespace
+       cross join lateral aclexplode(c.relacl) a
+       join pg_roles r on r.oid = a.grantee
+       where n.nspname = 'restroom' and r.rolname = 'service_role'
+       order by 1, 2`)
+
+    eq(rows.map((r) => `${r.relname}:${r.privilege_type}`).join(' '), '',
+      'service_role picked up a grant in restroom')
   })
 
   test('the deliberate exceptions are still the only ones', async (t) => {
