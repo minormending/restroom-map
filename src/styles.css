@@ -17,6 +17,17 @@
   --warn:        #8A5A0D;
   --bad:         #9E2F2F;
 
+  /* Ink for text that sits *on* one of the fills above, rather than beside it.
+     The fills invert between schemes and their ink has to invert with them:
+     light --accent is a deep blue that carries white, dark --accent is a pale
+     tint meant to be read against dark, and white on it measures 2.5:1. Six
+     rules hard-coded #fff and so were unreadable in dark on every one of them.
+     Named per fill rather than shared, so darkening one later does not silently
+     commit the other two to the same ink. */
+  --on-accent:   #FFFFFF;
+  --on-ok:       #FFFFFF;
+  --on-warn:     #FFFFFF;
+
   /* The access kinds again, but as *text*.
      ACCESS_COLORS in map/icons.ts is a fill scale — it colours pin bodies and
      the filter swatches, where the only requirement is that four hues stay
@@ -77,6 +88,9 @@
     --ok:          #5BB57F;
     --warn:        #D3A04A;
     --bad:         #E2776F;
+    --on-accent:   #11161A;
+    --on-ok:       #11161A;
+    --on-warn:     #11161A;
     --access-open:      #5BB57F;
     --access-code:      #D3A04A;
     --access-ask:       #77A6EC;
@@ -99,6 +113,9 @@
   --ok:          #5BB57F;
   --warn:        #D3A04A;
   --bad:         #E2776F;
+  --on-accent:   #11161A;
+  --on-ok:       #11161A;
+  --on-warn:     #11161A;
   --access-open:      #5BB57F;
   --access-code:      #D3A04A;
   --access-ask:       #77A6EC;
@@ -242,7 +259,7 @@ button { font: inherit; color: inherit; }
   padding: 0 0.3rem;
   border-radius: 99px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
 }
@@ -637,11 +654,11 @@ button { font: inherit; color: inherit; }
   background: var(--surface-alt);
   color: var(--ink-3);
 }
-.amenities .yes .amenity-mark { background: var(--ok); color: #fff; }
+.amenities .yes .amenity-mark { background: var(--ok); color: var(--on-ok); }
 .amenities .no .amenity-mark { background: var(--rule); color: var(--ink-2); }
 /* Not a softer yes. "Women's room only" and "partly step-free" are the rows
    most worth stopping on, so they get the one mark that is neither. */
-.amenities .partial .amenity-mark { background: var(--warn); color: #fff; }
+.amenities .partial .amenity-mark { background: var(--warn); color: var(--on-warn); }
 
 /* Old pins are still useful pins, but the reader has to know which they are.
    Warn rather than error: nothing is broken, the data is just from before. */
@@ -1043,7 +1060,7 @@ button { font: inherit; color: inherit; }
 .flag-send {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 500;
 }
 .flag-send:disabled { opacity: 0.5; cursor: default; }
@@ -1078,7 +1095,7 @@ button { font: inherit; color: inherit; }
   height: 22px;
   border-radius: 99px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 0.75rem;
 }
 
@@ -1221,7 +1238,7 @@ button { font: inherit; color: inherit; }
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .btn-primary:disabled { opacity: 0.5; cursor: default; }
 
