@@ -1,11 +1,25 @@
 # Data model
 
-Twelve tables. Four of them are the map; the rest are how it earns the right to
-say anything.
+Seven tables in this app's own schema, over six in the layer shared with the
+other apps in the database. Four of the seven are the map; the rest are how it
+earns the right to say anything.
+
+Which is which matters when you go looking for one, so:
+
+| in `restroom`, this app's | in `public`, shared |
+| --- | --- |
+| `bathrooms`, `bathroom_codes`, `reports`, `comments` | `profiles` |
+| `access_claims`, `code_unlocks`, `credit_ledger` | `flags`, `feedback` |
+| | `rate_limit`, `apps`, `moderators` |
+
+[shared-database.md](shared-database.md) is why. The short version is that
+accounts, rate limiting and the moderation queue are one per database rather
+than one per app, and everything below that names `profiles`, `flags`,
+`feedback` or `rate_limit` is talking about a table this repo does not own.
 
 ```mermaid
 erDiagram
-    profiles ||--o{ bathrooms : "created_by"
+    profiles ||--o{ bathrooms : "created_by (shared)"
     profiles ||--o{ reports : "user_id"
     profiles ||--o{ comments : "user_id"
     profiles ||--o{ access_claims : "user_id"
@@ -64,14 +78,20 @@ erDiagram
     }
 ```
 
-Two tables have no relationship to anything, on purpose:
+Two of the shared tables have no relationship to anything, on purpose — and
+being shared is now a second reason they could not have one:
 
 - **`flags`** — a complaint about a row. `target_type` is `bathroom` or
   `comment` and `target_id` is **not** a foreign key, so a flag survives the
   thing it was about. That is the audit trail: deleting the evidence alongside
-  the thing is how a deletion becomes unexplainable six months later.
+  the thing is how a deletion becomes unexplainable six months later. It could
+  not be a foreign key now in any case, because the rows it points at are in a
+  different app's schema depending on which app wrote it.
 - **`feedback`** — a complaint about the app. No target at all, which is why it
   is not a flag.
+
+Both carry an `app` column. **Every query against either needs to filter on
+it**, or it is reading the whole database's complaints rather than this one's.
 
 And **`rate_limit`** is just a counter keyed by a hashed address.
 
@@ -170,13 +190,29 @@ feedback arrived. Feedback rows put the kind and build in the subject
 (`feedback: bug · v97`), which is what you want to see before reading the
 message.
 
+It now does two more jobs, both invisible from the outside. It selects from the
+**shared** `flags` and `feedback` with `where app = 'restroom-map'` on each half
+of the union, so the queue is this app's and not the database's; and it aliases
+the shared `message` column back to `reason`, which is the name every caller in
+this repo already used. Those two lines are the reason `pnpm db:queue` survived
+the move to a shared database without an edit — and `db.mjs triage`, which
+queries the base tables instead of going through the view, did not.
+
 </details>
 
 ## Migrations
 
-Twenty-six files in `supabase/migrations/`, applied in filename order, tracked
-in `schema_migrations` by hash. **Never edit one that has been applied** — the
-hash check will refuse it. Add another.
+Thirty-three files in `supabase/migrations/`, applied in filename order,
+tracked in `schema_migrations` by hash. **Never edit one that has been
+applied** — the hash check will refuse it. Add another.
+
+The three numbered `0001`–`0003` are the odd ones out and they are the newest:
+they create the `restroom` schema, carry every table into it, and move this
+app's flags and feedback into the shared tables. They sort first because the
+naming convention changed with them, which is harmless — they are recorded as
+applied and nothing reapplies them — but it does mean the file order is no
+longer the historical order. `schema_migrations` lives in `restroom` too, so
+each app in the database numbers from `0001` without colliding.
 
 They are worth reading in order; each one's header explains the failure or
 decision that produced it, and several are more useful than this document.
