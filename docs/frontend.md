@@ -177,9 +177,9 @@ before repeating it.
 
 ## CSS: one file, named bands
 
-[`src/styles.css`](../src/styles.css) is plain CSS with custom properties. Four
-of those properties are worth knowing because they encode relationships
-between elements that live hundreds of lines apart:
+[`src/styles.css`](../src/styles.css) is plain CSS with custom properties.
+Seven of those properties are worth knowing because they encode relationships
+between elements that live hundreds of lines apart. Four are about space:
 
 | token | what it means |
 | --- | --- |
@@ -192,6 +192,36 @@ They exist because hand-fitted numbers drifted. The intro card cleared the
 footer by **four pixels** — measured, not overlapping, but a hairline that read
 as a collision in a screenshot and would have become one with any change to the
 footer's font size.
+
+Three more encode a relationship between a fill and the text on it:
+`--on-accent`, `--on-ok` and `--on-warn`. **If you paint text on a token fill,
+use its ink — never a literal.**
+
+<details>
+<summary><b>Advanced</b> — why those are three tokens and not one</summary>
+
+Six rules painted text on a token fill and hard-coded `#fff` to do it. That
+holds in light, where `--accent`, `--ok` and `--warn` are all dark enough to
+carry white. In dark every one of them becomes a pale tint meant to be read
+*against* dark, and white on them measures **2.4 to 2.5:1** — under half of the
+4.5 that AA asks for. It affected `.btn-primary` (the Continue in the sign-in
+warning, and both steps of adding a place), the filter count pip, the account
+initial, the flag form's send button, and the amenity marks.
+
+So each fill got a paired ink that inverts with it: white in light, `#11161A`
+in dark. Measured after: 7.33:1 on `--accent`, 7.25:1 on `--ok`, 7.71:1 on
+`--warn`, with light unchanged at 7.99, 6.50 and 5.92.
+
+Named per fill rather than sharing one `--on-fill`, so that darkening one of
+them later does not silently commit the other two to the same ink.
+
+The finding is worth more than the fix: this was caught when `ui-audit`'s
+tablet project started rendering dark, and **nothing had ever audited this
+app's dark half before**. Six rules, shipping unreadable in a whole colour
+scheme, with the audit green — because the audit was only ever looking at one
+of the two.
+
+</details>
 
 <details>
 <summary><b>Advanced</b> — two CSS traps this file has hit</summary>
