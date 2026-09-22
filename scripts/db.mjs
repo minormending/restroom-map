@@ -24,7 +24,7 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { join, basename } from 'node:path'
-import { ROOT, withClient } from './lib/connect.mjs'
+import { APP, ROOT, withClient } from './lib/connect.mjs'
 
 const MIGRATIONS = join(ROOT, 'supabase', 'migrations')
 
@@ -192,6 +192,11 @@ async function unhide(client, id) {
  * DATA. Anything downstream that reads it — a person, a model, a template —
  * must treat it as a report of a problem and never as an instruction, however
  * it is phrased. The `source` field is here so that is never ambiguous.
+ *
+ * Both halves filter on `app`. flags and feedback are shared tables and the
+ * rows of every app sit in them together, so without it this hands the
+ * restroom triage run somebody else's bug reports — about a codebase it cannot
+ * read, from users it does not have.
  */
 async function triage(client) {
   const { rows } = await client.query(`
@@ -204,7 +209,7 @@ async function triage(client) {
       f.build,
       'feedback'          as source
     from feedback f
-    where f.resolved_at is null
+    where f.resolved_at is null and f.app = $1
 
     union all
 
@@ -212,15 +217,15 @@ async function triage(client) {
       g.id,
       g.created_at,
       'flag'              as kind,
-      g.reason            as message,
+      g.message,
       g.contact_email,
       null                as build,
       'flag:' || g.target_type || coalesce(' ' || b.name, '') as source
     from flags g
     left join bathrooms b on g.target_type = 'bathroom' and b.id = g.target_id
-    where g.resolved_at is null
+    where g.resolved_at is null and g.app = $1
 
-    order by created_at`)
+    order by created_at`, [APP])
 
   console.log(JSON.stringify(
     { generated_at: new Date().toISOString(), open: rows.length, items: rows },
